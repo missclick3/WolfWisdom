@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="back_to_exit_headline">Нажмите ещё раз назад,</string>
+    <string name="back_to_exit_detail">чтобы выйти из приложения</string>
     <string name="next_quote">Следующая цитата</string>
     <string name="previous_quote">Предыдущая цитата</string>
     <string name="save_quote">Сохранить цитату</string>

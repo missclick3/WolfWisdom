@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="back_to_exit_headline">Press back once more</string>
+    <string name="back_to_exit_detail">to exit the app</string>
     <string name="next_quote">Next quote</string>
     <string name="previous_quote">Previous quote</string>
     <string name="save_quote">Save quote</string>

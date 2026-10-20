@@ -18,6 +18,7 @@ object WolfPalette {
 object WolfColors {
     val Background = WolfPalette.Night950
     val Surface = WolfPalette.Night800
+    val SnackbarSurface = Color(0xFF0B131F)
     val Text = WolfPalette.Moon100
     val Secondary = WolfPalette.Moon300
     val Muted = WolfPalette.Moon500

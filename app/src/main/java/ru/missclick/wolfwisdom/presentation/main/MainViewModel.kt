@@ -4,8 +4,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.missclick.wolfwisdom.domain.repository.QuoteRepository
@@ -16,6 +18,8 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
 
     private val _state = MutableStateFlow(MainState())
     val state = _state.asStateFlow()
+    private val effectChannel = Channel<MainEffect>(Channel.BUFFERED)
+    val effects = effectChannel.receiveAsFlow()
     private var quoteGeneration = 0L
 
     init {
@@ -45,6 +49,9 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
 
     fun onAction(action: MainAction) {
         when (action) {
+            MainAction.BackPressed -> viewModelScope.launch {
+                effectChannel.send(MainEffect.ShowCloseSnackbar)
+            }
             MainAction.ToggleOptions -> _state.update {
                 it.copy(isOptionsVisible = !it.isOptionsVisible)
             }
