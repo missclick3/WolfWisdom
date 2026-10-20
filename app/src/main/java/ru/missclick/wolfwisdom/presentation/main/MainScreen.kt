@@ -24,7 +24,7 @@ import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
 import ru.missclick.wolfwisdom.ui.theme.WolfSpacing
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
-const val QUOTE = "Волк не тот, кто волк, а тот, кто волк"
+const val QUOTE = "Мечтай масштабно. Делай по силам. Спи регулярно."
 
 @Composable
 fun MainRoot(

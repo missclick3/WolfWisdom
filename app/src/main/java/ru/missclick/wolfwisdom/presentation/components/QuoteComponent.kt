@@ -43,7 +43,7 @@ fun QuoteComponent(
             modifier = Modifier.fillMaxWidth(),
             style = WolfTypography.HeroQuote,
             color = WolfColors.Text,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Start
         )
         // Mirror the action rail's width on the left to keep the author and divider
         // centered under the quote, while reserving space for the buttons on the right.
