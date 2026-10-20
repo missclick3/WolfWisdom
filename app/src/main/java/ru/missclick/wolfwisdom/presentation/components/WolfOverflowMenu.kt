@@ -20,6 +20,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -56,6 +63,19 @@ fun WolfOverflowMenu(
     modifier: Modifier = Modifier,
     onItemClick: (WolfMenuAction) -> Unit = {}
 ) {
+    var pendingAction by remember { mutableStateOf<WolfMenuAction?>(null) }
+    var isPopupComposed by remember { mutableStateOf(false) }
+    val currentOnItemClick by rememberUpdatedState(onItemClick)
+
+    LaunchedEffect(isPopupComposed, pendingAction) {
+        if (!isPopupComposed) {
+            pendingAction?.let { action ->
+                pendingAction = null
+                currentOnItemClick(action)
+            }
+        }
+    }
+
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
@@ -71,15 +91,23 @@ fun WolfOverflowMenu(
             dismissOnClickOutside = true
         )
     ) {
+        // Material removes this content after its closing animation finishes.
+        DisposableEffect(Unit) {
+            isPopupComposed = true
+            onDispose { isPopupComposed = false }
+        }
         WolfMenuAction.entries.forEachIndexed { index, action ->
             Box {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = WolfSpacing.Space48)
-                        .clickable(role = Role.Button) {
+                        .clickable(
+                            enabled = expanded && pendingAction == null,
+                            role = Role.Button
+                        ) {
+                            pendingAction = action
                             onDismissRequest()
-                            onItemClick(action)
                         }
                         .padding(
                             start = WolfSpacing.Space16,

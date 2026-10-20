@@ -44,7 +44,8 @@ fun MainRoot(
     viewModel: MainViewModel = koinViewModel(),
     onMenuItemClick: (WolfMenuAction) -> Unit = {},
     onShareClick: () -> Unit = {},
-    onWidgetClick: () -> Unit = {}
+    onWidgetClick: () -> Unit = {},
+    onNavigateToSaved: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -78,7 +79,13 @@ fun MainRoot(
     MainScreen(
         state = state,
         onAction = viewModel::onAction,
-        onMenuItemClick = onMenuItemClick,
+        onMenuItemClick = { action ->
+            if (action == WolfMenuAction.SAVED) {
+                onNavigateToSaved()
+            } else {
+                onMenuItemClick(action)
+            }
+        },
         onShareClick = onShareClick,
         onWidgetClick = onWidgetClick,
         snackbarHost = { WolfSnackbarHost(hostState = snackbarHostState) }

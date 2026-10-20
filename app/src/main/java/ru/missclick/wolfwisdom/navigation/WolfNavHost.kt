@@ -7,6 +7,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ru.missclick.wolfwisdom.presentation.main.MainRoot
+import ru.missclick.wolfwisdom.presentation.saved.SavedRoot
+import ru.missclick.wolfwisdom.presentation.saved.SavedScreen
 
 @Composable
 fun WolfNavHost(
@@ -19,7 +21,16 @@ fun WolfNavHost(
         modifier = modifier
     ) {
         composable<Screen.Main> {
-            MainRoot()
+            MainRoot(
+                onNavigateToSaved = {
+                    navController.navigate(Screen.Saved) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+        composable<Screen.Saved> {
+            SavedRoot()
         }
     }
 }
