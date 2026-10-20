@@ -49,6 +49,7 @@ fun FlippingQuoteCard(
     onWidgetClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val playFlipSound = rememberQuoteFlipSound()
     val showIncoming by remember(transition?.id) {
         derivedStateOf { abs(swipeState.rotation.value) >= 90f }
     }
@@ -82,6 +83,7 @@ fun FlippingQuoteCard(
             }
             swipeState.returnToRest()
         } else {
+            playFlipSound(flip.id)
             val remaining = (180f - abs(swipeState.rotation.value)).coerceAtLeast(0f)
             val duration = (650f * remaining / 180f).roundToInt().coerceIn(400, 650)
             swipeState.rotation.animateTo(sign * 180f, tween(duration, easing = FastOutSlowInEasing))
