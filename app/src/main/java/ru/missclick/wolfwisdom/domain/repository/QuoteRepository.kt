@@ -13,6 +13,9 @@ interface QuoteRepository {
     /** Moves back through history; stays on the first quote at the beginning. */
     suspend fun previousQuote(): Quote
 
+    /** Whether the persisted cursor has an earlier history entry. */
+    suspend fun hasPreviousQuote(): Boolean
+
     /** Initializes the feed on collection and observes position and saved-state changes. */
     fun observeCurrentQuote(): Flow<Quote>
 

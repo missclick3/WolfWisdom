@@ -60,6 +60,11 @@ class RoomQuoteRepository(
         }
     }.toDomain()
 
+    override suspend fun hasPreviousQuote(): Boolean = database.withTransaction {
+        initializeIfNeeded()
+        currentEntry()?.let { navigation.getPreviousHistoryEntry(it.id) != null } ?: false
+    }
+
     override fun observeCurrentQuote(): Flow<Quote> = flow {
         getCurrentQuote()
         emitAll(navigation.observeCurrentQuote().map { dto ->

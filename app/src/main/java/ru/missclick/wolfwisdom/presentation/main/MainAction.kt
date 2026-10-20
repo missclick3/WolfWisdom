@@ -6,4 +6,5 @@ sealed interface MainAction {
     data object ToggleQuoteSaved : MainAction
     data object SwipeUp : MainAction
     data object SwipeDown : MainAction
+    data class QuoteAnimationFinished(val transitionId: Long) : MainAction
 }

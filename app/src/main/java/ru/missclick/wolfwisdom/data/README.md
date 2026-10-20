@@ -18,14 +18,18 @@ The module uses the application context and stores `wolf_wisdom.db` in Android's
 private database directory. No destructive migration fallback is enabled.
 
 `MainViewModel` observes the current domain quote and populates the screen's
-`quote` and `isQuoteSaved` fields. Swipe actions and save actions are placeholders;
-they do not navigate or modify saved state yet.
+`quote` and `isQuoteSaved` fields. Vertical swipes across the main screen drive the
+quote card's rotation. Releasing after a quarter-screen drag (140–200dp) commits
+navigation and completes the turn; shorter or cancelled drags ease back without
+touching the repository. Swiping down at the beginning only tilts the card and
+does not change history. Save actions remain placeholders.
 
 ## Repository API
 
 - `getCurrentQuote()` initializes the feed or resumes the persisted cursor.
 - `nextQuote()` replays the next history entry, or generates one at the frontier.
 - `previousQuote()` replays the previous entry, staying put at the earliest entry.
+- `hasPreviousQuote()` reports whether the persisted cursor has an earlier entry.
 - `observeCurrentQuote()` initializes on collection and observes cursor/saved changes.
 - `observeSavedQuotes()` observes saved quotes, ordered by generated quote ID.
 - `setSaved(id, isSaved)` persists the flag; an unknown ID throws `IllegalArgumentException`.

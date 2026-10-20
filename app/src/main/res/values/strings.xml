@@ -1,4 +1,6 @@
 <resources>
+    <string name="next_quote">Следующая цитата</string>
+    <string name="previous_quote">Предыдущая цитата</string>
     <string name="save_quote">Сохранить цитату</string>
     <string name="remove_quote_from_saved">Удалить цитату из сохранённых</string>
     <string name="close_options">Закрыть меню</string>

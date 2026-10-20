@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,7 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
-import ru.missclick.wolfwisdom.presentation.components.QuoteComponent
+import ru.missclick.wolfwisdom.presentation.components.FlippingQuoteCard
+import ru.missclick.wolfwisdom.presentation.components.quoteSwipeGestures
+import ru.missclick.wolfwisdom.presentation.components.rememberQuoteSwipeState
 import ru.missclick.wolfwisdom.presentation.components.SwipeUpHint
 import ru.missclick.wolfwisdom.presentation.components.WolfHeader
 import ru.missclick.wolfwisdom.presentation.components.WolfMenuAction
@@ -52,6 +52,7 @@ fun MainScreen(
     onShareClick: () -> Unit = {},
     onWidgetClick: () -> Unit = {},
 ) {
+    val swipeState = rememberQuoteSwipeState()
     WolfWisdomScreen {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -61,6 +62,14 @@ fun MainScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
+                    .quoteSwipeGestures(
+                        state = swipeState,
+                        enabled = state.quote.isNotEmpty() && !state.isNavigating &&
+                            state.quoteTransition == null && !state.isOptionsVisible,
+                        canGoBack = state.canGoBack,
+                        onSwipeUp = { onAction(MainAction.SwipeUp) },
+                        onSwipeDown = { onAction(MainAction.SwipeDown) }
+                    )
             ) {
                 WolfHeader(
                     isOptionsVisible = state.isOptionsVisible,
@@ -72,7 +81,6 @@ fun MainScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
                         .padding(
                             horizontal = WolfSpacing.Space20,
                             vertical = WolfSpacing.Space32
@@ -81,9 +89,15 @@ fun MainScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (state.quote.isNotEmpty()) {
-                        QuoteComponent(
+                        FlippingQuoteCard(
                             quote = state.quote,
                             isSaved = state.isQuoteSaved,
+                            swipeState = swipeState,
+                            transition = state.quoteTransition,
+                            enabled = !state.isNavigating,
+                            onSwipeUp = { onAction(MainAction.SwipeUp) },
+                            onSwipeDown = { onAction(MainAction.SwipeDown) },
+                            onAnimationFinished = { onAction(MainAction.QuoteAnimationFinished(it)) },
                             onSaveClick = { onAction(MainAction.ToggleQuoteSaved) },
                             onShareClick = onShareClick,
                             onWidgetClick = onWidgetClick

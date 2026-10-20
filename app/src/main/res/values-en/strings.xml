@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="next_quote">Next quote</string>
+    <string name="previous_quote">Previous quote</string>
     <string name="save_quote">Save quote</string>
     <string name="remove_quote_from_saved">Remove quote from saved</string>
     <string name="close_options">Close menu</string>
