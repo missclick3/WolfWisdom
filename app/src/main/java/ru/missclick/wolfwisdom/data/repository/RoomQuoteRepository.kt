@@ -80,7 +80,8 @@ class RoomQuoteRepository(
     override suspend fun setSaved(quoteId: Long, isSaved: Boolean) {
         database.withTransaction {
             initializeIfNeeded()
-            require(quotes.setSaved(quoteId, isSaved) == 1) { "Unknown quote id: $quoteId" }
+            val savedAt = if (isSaved) System.currentTimeMillis() else null
+            require(quotes.setSaved(quoteId, isSaved, savedAt) == 1) { "Unknown quote id: $quoteId" }
         }
     }
 

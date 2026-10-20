@@ -17,11 +17,20 @@ interface QuoteDao {
     @Query("SELECT * FROM quotes WHERE id = :id")
     suspend fun getById(id: Long): QuoteDto?
 
-    @Query("SELECT * FROM quotes WHERE isSaved = 1 ORDER BY id")
+    @Query("SELECT * FROM quotes WHERE isSaved = 1 ORDER BY savedAt DESC, id ASC")
     fun observeSaved(): Flow<List<QuoteDto>>
 
-    @Query("UPDATE quotes SET isSaved = :isSaved WHERE id = :id")
-    suspend fun setSaved(id: Long, isSaved: Boolean): Int
+    @Query("""
+        UPDATE quotes
+        SET isSaved = :isSaved,
+            savedAt = CASE
+                WHEN :isSaved = 0 THEN NULL
+                WHEN isSaved = 1 AND savedAt IS NOT NULL THEN savedAt
+                ELSE :savedAt
+            END
+        WHERE id = :id
+    """)
+    suspend fun setSaved(id: Long, isSaved: Boolean, savedAt: Long?): Int
 
     @Query("""
         SELECT * FROM quotes

@@ -1,0 +1,136 @@
+package ru.missclick.wolfwisdom.data
+
+import android.database.sqlite.SQLiteDatabase
+import androidx.room.Room
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.json.JSONObject
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import ru.missclick.wolfwisdom.data.local.QuoteSeedSource
+import ru.missclick.wolfwisdom.data.local.WolfWisdomDatabase
+import ru.missclick.wolfwisdom.data.local.dto.QuoteDto
+import ru.missclick.wolfwisdom.data.mapper.toDomain
+import ru.missclick.wolfwisdom.data.repository.RoomQuoteRepository
+
+@RunWith(AndroidJUnit4::class)
+class SavedQuotesDatabaseTest {
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+    private var database: WolfWisdomDatabase? = null
+    private val migrationDatabaseName = "saved-quotes-migration-test.db"
+
+    @After
+    fun tearDown() {
+        database?.close()
+        context.deleteDatabase(migrationDatabaseName)
+    }
+
+    private fun inMemoryDatabase(): WolfWisdomDatabase =
+        Room.inMemoryDatabaseBuilder(context, WolfWisdomDatabase::class.java)
+            .build().also { database = it }
+
+    @Test
+    fun migration_preservesSavedQuotesAndReadingHistory() = runBlocking {
+        val schema = InstrumentationRegistry.getInstrumentation().context.assets
+            .open("ru.missclick.wolfwisdom.data.local.WolfWisdomDatabase/1.json")
+            .bufferedReader().use { JSONObject(it.readText()).getJSONObject("database") }
+        val path = context.getDatabasePath(migrationDatabaseName)
+        path.parentFile?.mkdirs()
+        context.deleteDatabase(migrationDatabaseName)
+        SQLiteDatabase.openOrCreateDatabase(path, null).use { old ->
+            val entities = schema.getJSONArray("entities")
+            for (index in 0 until entities.length()) {
+                val entity = entities.getJSONObject(index)
+                old.execSQL(entity.getString("createSql").replace(
+                    "\${TABLE_NAME}", entity.getString("tableName")
+                ))
+                entity.optJSONArray("indices")?.let { indices ->
+                    for (indexNumber in 0 until indices.length()) {
+                        old.execSQL(indices.getJSONObject(indexNumber).getString("createSql").replace(
+                            "\${TABLE_NAME}", entity.getString("tableName")
+                        ))
+                    }
+                }
+            }
+            old.execSQL("INSERT INTO quotes (id, quote, isSaved) VALUES (1, 'Old saved', 1), (2, 'Unsaved', 0)")
+            old.execSQL("INSERT INTO quote_history (id, quoteId) VALUES (1, 1)")
+            old.execSQL("INSERT INTO quote_reading_state (id, currentHistoryId) VALUES (1, 1)")
+            old.execSQL("INSERT INTO quote_cycle (quoteId) VALUES (1)")
+            old.version = 1
+        }
+
+        val migrated = Room.databaseBuilder(context, WolfWisdomDatabase::class.java, migrationDatabaseName)
+            .addMigrations(WolfWisdomDatabase.MIGRATION_1_2)
+            .build().also { database = it }
+
+        val saved = migrated.quoteDao().observeSaved().first()
+        assertEquals(listOf(QuoteDto(1, "Old saved", true, null)), saved)
+        assertFalse(requireNotNull(migrated.quoteDao().getById(2)).isSaved)
+        assertEquals(1L, migrated.quoteNavigationDao().getReadingState()?.currentHistoryId)
+        assertEquals(1L, migrated.quoteNavigationDao().getHistoryEntry(1)?.quoteId)
+        migrated.openHelper.readableDatabase.query("SELECT COUNT(*) FROM quote_cycle").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
+        assertEquals(2, migrated.openHelper.readableDatabase.version)
+    }
+
+    @Test
+    fun savedQuotes_newestFirstWithLegacySavesLast() = runBlocking {
+        val dao = inMemoryDatabase().quoteDao()
+        dao.insertAll(listOf(
+            QuoteDto(1, "Legacy", true),
+            QuoteDto(2, "Newest"),
+            QuoteDto(3, "Earlier"),
+            QuoteDto(4, "Same timestamp")
+        ))
+        dao.setSaved(3, true, 100L)
+        dao.setSaved(4, true, 100L)
+        dao.setSaved(2, true, 200L)
+
+        assertEquals(listOf(2L, 3L, 4L, 1L), dao.observeSaved().first().map { it.id })
+        assertEquals(200L, dao.getById(2)?.toDomain()?.savedAt)
+    }
+
+    @Test
+    fun savedTimestamp_repeatedSavePreservesDateAndResaveRefreshesIt() = runBlocking {
+        val dao = inMemoryDatabase().quoteDao()
+        dao.insertAll(listOf(QuoteDto(1, "First"), QuoteDto(2, "Second")))
+        dao.setSaved(1, true, 100L)
+        dao.setSaved(2, true, 200L)
+
+        dao.setSaved(1, true, 300L)
+        assertEquals(100L, dao.getById(1)?.savedAt)
+        assertEquals(listOf(2L, 1L), dao.observeSaved().first().map { it.id })
+
+        dao.setSaved(1, false, null)
+        assertNull(dao.getById(1)?.savedAt)
+        assertEquals(listOf(2L), dao.observeSaved().first().map { it.id })
+
+        dao.setSaved(1, true, 400L)
+        assertEquals(400L, dao.getById(1)?.savedAt)
+        assertEquals(listOf(1L, 2L), dao.observeSaved().first().map { it.id })
+    }
+
+    @Test
+    fun repository_saveRecordsCurrentEpochMilliseconds() = runBlocking {
+        val db = inMemoryDatabase()
+        db.quoteDao().insertAll(listOf(QuoteDto(1, "Quote")))
+        val repository = RoomQuoteRepository(db, QuoteSeedSource(context.assets))
+        val before = System.currentTimeMillis()
+
+        repository.setSaved(1, true)
+
+        val savedAt = requireNotNull(repository.observeSavedQuotes().first().single().savedAt)
+        assertTrue(savedAt in before..System.currentTimeMillis())
+        repository.setSaved(1, false)
+        assertNull(db.quoteDao().getById(1)?.savedAt)
+    }
+}

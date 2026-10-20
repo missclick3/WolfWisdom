@@ -26,6 +26,7 @@ object WolfColors {
     val Accent = WolfPalette.Ice300
     val Border = WolfPalette.Ice500
     val Glass = Surface.copy(alpha = 0.91f)
+    val SavedGlass = Surface.copy(alpha = 0.52f)
     val Pressed = Accent.copy(alpha = 0.16f)
     val GlassBorder = Color(red = 0.33f, green = 0.41f, blue = 0.50f, alpha = 0.55f)
     val IconMoon = Color(red = 0.87f, green = 0.91f, blue = 1f, alpha = 1f)

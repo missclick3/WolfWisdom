@@ -34,8 +34,11 @@ consistent. Saves persist when navigating away or restarting the app.
 - `previousQuote()` replays the previous entry, staying put at the earliest entry.
 - `hasPreviousQuote()` reports whether the persisted cursor has an earlier entry.
 - `observeCurrentQuote()` initializes on collection and observes cursor/saved changes.
-- `observeSavedQuotes()` observes saved quotes, ordered by generated quote ID.
-- `setSaved(id, isSaved)` persists the flag; an unknown ID throws `IllegalArgumentException`.
+- `observeSavedQuotes()` observes saved quotes, newest `savedAt` first, with quote ID
+  as a deterministic tie-breaker. Older saves with unknown dates follow dated saves.
+- `setSaved(id, isSaved)` persists the flag and UTC epoch-millisecond save time.
+  Repeating a save preserves its timestamp; unsaving clears it, and saving again
+  assigns a new timestamp. An unknown ID throws `IllegalArgumentException`.
 
 All one-shot methods suspend. Flows are cold and emit distinct domain models.
 Calling next/previous on an uninitialized feed returns its first random quote.
@@ -51,11 +54,13 @@ Initialization seeds an empty database in a transaction. Existing installations
 keep their data: restarting or resolving another repository never reseeds or
 resets saves, history, the cursor or cycle progress. Editing the bundled file
 later does not update existing databases; future seed updates need an explicit
-data migration. Schema version 1 is exported under `app/schemas`.
+data migration. Schemas are exported under `app/schemas`. Migration 1 to 2 adds
+nullable `savedAt`, preserving all existing quotes, saved flags, and reading history.
+Historical save dates remain unknown rather than being fabricated.
 
 ## Reading sequence
 
-The quote DTO has only `id`, `quote`, and `isSaved`. Three separate tables store
+The quote DTO has `id`, `quote`, `isSaved`, and `savedAt`. Three separate tables store
 the append-only reading history, its current cursor, and the IDs generated in
 the active cycle.
 

@@ -10,5 +10,8 @@ data class QuoteDto(
     val id: Long = 0,
     val quote: String,
     @ColumnInfo(defaultValue = "0")
-    val isSaved: Boolean = false
+    val isSaved: Boolean = false,
+    /** UTC epoch milliseconds; null when unsaved or the original save time is unknown. */
+    @ColumnInfo(defaultValue = "NULL")
+    val savedAt: Long? = null
 )

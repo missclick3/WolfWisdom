@@ -26,4 +26,9 @@
     <string name="empty_saved_title">Here will be your wisdom</string>
     <string name="empty_saved_description">Click heart button to save quote.</string>
     <string name="quote_is_set_to_widget">Quote is set to widget</string>
+    <string name="navigate_back">Back</string>
+    <string name="open_saved_search">Open search</string>
+    <string name="close_saved_search">Close search</string>
+    <string name="saved_load_error">Could not load saved quotes</string>
+    <string name="saved_remove_error">Could not remove the quote. Please try again.</string>
 </resources>

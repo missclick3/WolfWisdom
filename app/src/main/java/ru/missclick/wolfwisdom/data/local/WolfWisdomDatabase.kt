@@ -2,6 +2,8 @@ package ru.missclick.wolfwisdom.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import ru.missclick.wolfwisdom.data.local.dao.QuoteDao
 import ru.missclick.wolfwisdom.data.local.dao.QuoteNavigationDao
 import ru.missclick.wolfwisdom.data.local.dto.QuoteCycleEntryDto
@@ -16,10 +18,18 @@ import ru.missclick.wolfwisdom.data.local.dto.QuoteReadingStateDto
         QuoteReadingStateDto::class,
         QuoteCycleEntryDto::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class WolfWisdomDatabase : RoomDatabase() {
     abstract fun quoteDao(): QuoteDao
     abstract fun quoteNavigationDao(): QuoteNavigationDao
+
+    companion object {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE quotes ADD COLUMN savedAt INTEGER DEFAULT NULL")
+            }
+        }
+    }
 }
