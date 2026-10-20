@@ -16,20 +16,27 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
 
     private val _state = MutableStateFlow(MainState())
     val state = _state.asStateFlow()
-    private var navigationGeneration = 0L
+    private var quoteGeneration = 0L
 
     init {
         viewModelScope.launch {
             quoteRepository.observeCurrentQuote().collect { quote ->
-                if (_state.value.isNavigating || _state.value.quoteTransition != null) return@collect
-                val generation = navigationGeneration
+                if (_state.value.isNavigating || _state.value.isSavingQuote ||
+                    _state.value.quoteTransition != null) return@collect
+                val generation = quoteGeneration
                 val canGoBack = quoteRepository.hasPreviousQuote()
                 _state.update {
-                    // A delayed observation must not replace a newer navigation result.
-                    if (generation != navigationGeneration || it.isNavigating || it.quoteTransition != null) {
+                    // A delayed observation must not replace a newer navigation or save result.
+                    if (generation != quoteGeneration || it.isNavigating || it.isSavingQuote ||
+                        it.quoteTransition != null) {
                         it
                     } else {
-                        it.copy(quote = quote.quote, isQuoteSaved = quote.isSaved, canGoBack = canGoBack)
+                        it.copy(
+                            quoteId = quote.id,
+                            quote = quote.quote,
+                            isQuoteSaved = quote.isSaved,
+                            canGoBack = canGoBack
+                        )
                     }
                 }
             }
@@ -44,7 +51,7 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
             MainAction.DismissOptions -> _state.update {
                 it.copy(isOptionsVisible = false)
             }
-            MainAction.ToggleQuoteSaved -> Unit
+            MainAction.ToggleQuoteSaved -> toggleQuoteSaved()
             MainAction.SwipeUp -> navigate(QuoteFlipDirection.Up)
             MainAction.SwipeDown -> navigate(QuoteFlipDirection.Down)
             is MainAction.QuoteAnimationFinished -> _state.update {
@@ -53,12 +60,37 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
         }
     }
 
+    private fun toggleQuoteSaved() {
+        val current = _state.value
+        val quoteId = current.quoteId ?: return
+        if (current.isSavingQuote || current.isNavigating || current.quoteTransition != null) return
+
+        val isSaved = !current.isQuoteSaved
+        ++quoteGeneration
+        _state.update { it.copy(isSavingQuote = true) }
+        viewModelScope.launch {
+            try {
+                quoteRepository.setSaved(quoteId, isSaved)
+                _state.update {
+                    if (it.quoteId == quoteId) it.copy(isQuoteSaved = isSaved) else it
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Log.e("MainViewModel", "Could not update the quote's saved state", error)
+            } finally {
+                _state.update { it.copy(isSavingQuote = false) }
+            }
+        }
+    }
+
     private fun navigate(direction: QuoteFlipDirection) {
         val current = _state.value
-        if (current.quote.isEmpty() || current.isNavigating || current.quoteTransition != null) return
+        if (current.quote.isEmpty() || current.isNavigating || current.isSavingQuote ||
+            current.quoteTransition != null) return
 
         val transition = QuoteCardTransition(
-            id = ++navigationGeneration,
+            id = ++quoteGeneration,
             direction = direction,
             outgoingQuote = current.quote,
             outgoingIsSaved = current.isQuoteSaved,
@@ -79,6 +111,7 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
                 val canGoBack = quoteRepository.hasPreviousQuote()
                 _state.update {
                     it.copy(
+                        quoteId = quote.id,
                         quote = quote.quote,
                         isQuoteSaved = quote.isSaved,
                         canGoBack = canGoBack,

@@ -22,7 +22,10 @@ private database directory. No destructive migration fallback is enabled.
 quote card's rotation. Releasing after a quarter-screen drag (140–200dp) commits
 navigation and completes the turn; shorter or cancelled drags ease back without
 touching the repository. Swiping down at the beginning only tilts the card and
-does not change history. Save actions remain placeholders.
+does not change history. The heart toggles the current quote's saved flag in Room
+using its domain ID. The card updates after a successful write; repeated taps and
+navigation are blocked during that write to keep quote identity and saved state
+consistent. Saves persist when navigating away or restarting the app.
 
 ## Repository API
 

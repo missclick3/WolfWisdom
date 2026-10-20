@@ -64,7 +64,7 @@ fun MainScreen(
                     .padding(innerPadding)
                     .quoteSwipeGestures(
                         state = swipeState,
-                        enabled = state.quote.isNotEmpty() && !state.isNavigating &&
+                        enabled = state.quote.isNotEmpty() && !state.isNavigating && !state.isSavingQuote &&
                             state.quoteTransition == null && !state.isOptionsVisible,
                         canGoBack = state.canGoBack,
                         onSwipeUp = { onAction(MainAction.SwipeUp) },
@@ -94,7 +94,7 @@ fun MainScreen(
                             isSaved = state.isQuoteSaved,
                             swipeState = swipeState,
                             transition = state.quoteTransition,
-                            enabled = !state.isNavigating,
+                            enabled = !state.isNavigating && !state.isSavingQuote,
                             onSwipeUp = { onAction(MainAction.SwipeUp) },
                             onSwipeDown = { onAction(MainAction.SwipeDown) },
                             onAnimationFinished = { onAction(MainAction.QuoteAnimationFinished(it)) },
