@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
-import ru.missclick.wolfwisdom.presentation.main.MainRoot
+import ru.missclick.wolfwisdom.navigation.WolfNavHost
 import ru.missclick.wolfwisdom.ui.theme.WolfPalette
 import ru.missclick.wolfwisdom.ui.theme.WolfTypography
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             WolfWisdomTheme {
                 WolfWisdomScreen {
-                    MainRoot()
+                    WolfNavHost()
                 }
             }
         }
