@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.compose.viewmodel.koinViewModel
 import ru.missclick.wolfwisdom.presentation.components.QuoteComponent
 import ru.missclick.wolfwisdom.presentation.components.SwipeUpHint
 import ru.missclick.wolfwisdom.presentation.components.WolfHeader
@@ -24,11 +24,11 @@ import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
 import ru.missclick.wolfwisdom.ui.theme.WolfSpacing
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
-const val QUOTE = "Мечтай масштабно. Делай по силам. Спи регулярно."
+private const val PreviewQuote = "Мечтай масштабно. Делай по силам. Спи регулярно."
 
 @Composable
 fun MainRoot(
-    viewModel: MainViewModel = viewModel(),
+    viewModel: MainViewModel = koinViewModel(),
     onMenuItemClick: (WolfMenuAction) -> Unit = {},
     onShareClick: () -> Unit = {},
     onWidgetClick: () -> Unit = {}
@@ -80,13 +80,15 @@ fun MainScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    QuoteComponent(
-                        quote = QUOTE,
-                        isSaved = state.isQuoteSaved,
-                        onSaveClick = { onAction(MainAction.ToggleQuoteSaved) },
-                        onShareClick = onShareClick,
-                        onWidgetClick = onWidgetClick
-                    )
+                    if (state.quote.isNotEmpty()) {
+                        QuoteComponent(
+                            quote = state.quote,
+                            isSaved = state.isQuoteSaved,
+                            onSaveClick = { onAction(MainAction.ToggleQuoteSaved) },
+                            onShareClick = onShareClick,
+                            onWidgetClick = onWidgetClick
+                        )
+                    }
                 }
                 SwipeUpHint(
                     modifier = Modifier
@@ -107,7 +109,7 @@ fun MainScreen(
 private fun Preview() {
     WolfWisdomTheme {
         MainScreen(
-            state = MainState(),
+            state = MainState(quote = PreviewQuote),
             onAction = {}
         )
     }

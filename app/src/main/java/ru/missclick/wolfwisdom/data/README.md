@@ -1,22 +1,25 @@
 # Quote storage and navigation
 
-`QuoteRepository` is the domain API; `RoomQuoteRepository` implements it. No
-presentation code or application startup wiring is included in this change.
+`QuoteRepository` is the domain API; `RoomQuoteRepository` implements it.
 
 ## Koin integration
 
-Register `quoteDataModule` when the app's Koin startup is added:
+`WolfWisdomApplication` registers `quoteDataModule` and `mainModule` on startup:
 
 ```kotlin
 startKoin {
     androidContext(application)
-    modules(quoteDataModule)
+    modules(quoteDataModule, mainModule)
 }
 ```
 
 Resolve `QuoteRepository` from Koin. The database and repository are singletons.
 The module uses the application context and stores `wolf_wisdom.db` in Android's
 private database directory. No destructive migration fallback is enabled.
+
+`MainViewModel` observes the current domain quote and populates the screen's
+`quote` and `isQuoteSaved` fields. Swipe actions and save actions are placeholders;
+they do not navigate or modify saved state yet.
 
 ## Repository API
 
