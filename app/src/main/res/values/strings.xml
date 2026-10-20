@@ -1,4 +1,6 @@
 <resources>
+    <string name="save_quote">Сохранить цитату</string>
+    <string name="remove_quote_from_saved">Удалить цитату из сохранённых</string>
     <string name="close_options">Закрыть меню</string>
     <string name="more_options">Дополнительные действия</string>
     <string name="app_name">Мудрость волка</string>
@@ -7,7 +9,7 @@
     <string name="quote_author">— Волк</string>
     <string name="share">Поделиться</string>
     <string name="set_widget">На виджет</string>
-    <string name="swipe_for_next">Свайпните вверх\nза следующей мудростью</string>
+    <string name="swipe_for_next">Свайпни вверх\nза следующей мудростью</string>
     <string name="saved">Сохранённые</string>
     <string name="donate">Дать на лапу</string>
     <string name="contacts">Контакты</string>

@@ -34,6 +34,9 @@ class MainViewModel : ViewModel() {
             MainAction.DismissOptions -> _state.update {
                 it.copy(isOptionsVisible = false)
             }
+            MainAction.ToggleQuoteSaved -> _state.update {
+                it.copy(isQuoteSaved = !it.isQuoteSaved)
+            }
         }
     }
 

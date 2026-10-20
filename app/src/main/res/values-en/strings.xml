@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="save_quote">Save quote</string>
+    <string name="remove_quote_from_saved">Remove quote from saved</string>
     <string name="close_options">Close menu</string>
     <string name="more_options">More options</string>
     <string name="app_name">Wolf\'s wisdom</string>
@@ -8,7 +10,7 @@
     <string name="quote_author">— Wolf</string>
     <string name="share">Share</string>
     <string name="set_widget">Set to widget</string>
-    <string name="swipe_for_next">Swipe up\\nfor next wisdom</string>
+    <string name="swipe_for_next">Swipe up\nfor next wisdom</string>
     <string name="saved">Saved</string>
     <string name="donate">Support creator</string>
     <string name="contacts">Contacts</string>

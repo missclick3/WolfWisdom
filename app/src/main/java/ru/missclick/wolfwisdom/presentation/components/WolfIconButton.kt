@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -28,6 +29,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.Dp
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.ui.theme.WolfColors
 import ru.missclick.wolfwisdom.ui.theme.WolfEffects
@@ -36,7 +38,7 @@ import ru.missclick.wolfwisdom.ui.theme.WolfSpacing
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
 /**
- * Figma Action / IconButton: a 40dp glass surface with a centered 24dp content slot.
+ * Figma Action / IconButton: a glass surface, 40dp by default, with a 24dp content slot.
  * Accepts Image, Icon, or other content. Icons inherit the moonlight content color;
  * images retain their original colors. Pass null descriptions to decorative slot
  * content because [contentDescription] labels the button itself.
@@ -50,6 +52,8 @@ fun WolfIconButton(
     contentDescription: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    size: Dp = WolfSpacing.Space40,
+    containerColor: Color = WolfColors.Glass,
     content: @Composable () -> Unit
 ) {
     Surface(
@@ -57,7 +61,7 @@ fun WolfIconButton(
         enabled = enabled,
         modifier = modifier
             .minimumInteractiveComponentSize()
-            .size(WolfSpacing.Space40)
+            .size(size)
             .alpha(if (enabled) 1f else 0.38f)
             .dropShadow(
                 shape = CircleShape,
@@ -73,7 +77,7 @@ fun WolfIconButton(
                 role = Role.Button
             },
         shape = CircleShape,
-        color = WolfColors.Glass,
+        color = containerColor,
         contentColor = WolfColors.IconMoon,
         border = BorderStroke(WolfLayout.Hairline, WolfColors.GlassBorder)
     ) {

@@ -1,8 +1,12 @@
 package ru.missclick.wolfwisdom.presentation.main
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -12,22 +16,31 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ru.missclick.wolfwisdom.presentation.components.QuoteComponent
+import ru.missclick.wolfwisdom.presentation.components.SwipeUpHint
 import ru.missclick.wolfwisdom.presentation.components.WolfHeader
 import ru.missclick.wolfwisdom.presentation.components.WolfMenuAction
 import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
+import ru.missclick.wolfwisdom.ui.theme.WolfSpacing
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
+
+const val QUOTE = "Волк не тот, кто волк, а тот, кто волк"
 
 @Composable
 fun MainRoot(
     viewModel: MainViewModel = viewModel(),
-    onMenuItemClick: (WolfMenuAction) -> Unit = {}
+    onMenuItemClick: (WolfMenuAction) -> Unit = {},
+    onShareClick: () -> Unit = {},
+    onWidgetClick: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     MainScreen(
         state = state,
         onAction = viewModel::onAction,
-        onMenuItemClick = onMenuItemClick
+        onMenuItemClick = onMenuItemClick,
+        onShareClick = onShareClick,
+        onWidgetClick = onWidgetClick
     )
 }
 
@@ -36,24 +49,53 @@ fun MainScreen(
     state: MainState,
     onAction: (MainAction) -> Unit,
     onMenuItemClick: (WolfMenuAction) -> Unit = {},
+    onShareClick: () -> Unit = {},
+    onWidgetClick: () -> Unit = {},
 ) {
     WolfWisdomScreen {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent
         ) { innerPadding ->
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                ,
-                contentAlignment = Alignment.TopStart
             ) {
                 WolfHeader(
                     isOptionsVisible = state.isOptionsVisible,
                     onOptionsClick = { onAction(MainAction.ToggleOptions) },
                     onOptionsDismissRequest = { onAction(MainAction.DismissOptions) },
                     onMenuItemClick = onMenuItemClick
+                )
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(
+                            horizontal = WolfSpacing.Space20,
+                            vertical = WolfSpacing.Space32
+                        ),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    QuoteComponent(
+                        quote = QUOTE,
+                        isSaved = state.isQuoteSaved,
+                        onSaveClick = { onAction(MainAction.ToggleQuoteSaved) },
+                        onShareClick = onShareClick,
+                        onWidgetClick = onWidgetClick
+                    )
+                }
+                SwipeUpHint(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(
+                            start = WolfSpacing.Space20,
+                            end = WolfSpacing.Space20,
+                            bottom = WolfSpacing.Space24
+                        )
                 )
             }
         }

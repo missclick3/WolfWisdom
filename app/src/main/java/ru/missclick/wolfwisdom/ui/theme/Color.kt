@@ -21,6 +21,7 @@ object WolfColors {
     val Text = WolfPalette.Moon100
     val Secondary = WolfPalette.Moon300
     val Muted = WolfPalette.Moon500
+    val Hint = Color(0xFFD4E0F2)
     val Accent = WolfPalette.Ice300
     val Border = WolfPalette.Ice500
     val Glass = Surface.copy(alpha = 0.91f)
