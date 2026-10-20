@@ -3,6 +3,7 @@ package ru.missclick.wolfwisdom
 import java.time.LocalDate
 
 enum class SeasonalIcon(val aliasName: String) {
+    DEFAULT("DefaultLauncher"),
     SPRING("SpringLauncher"),
     SUMMER("SummerLauncher"),
     AUTUMN("AutumnLauncher"),

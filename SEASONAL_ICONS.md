@@ -1,7 +1,34 @@
 # Seasonal launcher icons
 
-The five original 512 × 512 PNGs live in `app/src/main/res/drawable-nodpi`.
-Adaptive launcher resources let Android apply the device's icon shape.
+The six 512 × 512 PNGs from `wise_wolf_icons_512_archive.zip` live in
+`app/src/main/res/drawable-nodpi`: five seasonal icons and `wise_wolf_base.png`.
+Adaptive launcher resources let Android apply the device's icon shape. Each
+colored foreground uses an inset bitmap with fill gravity, fitting the source
+illustration into the inner 68dp of the 108dp adaptive layer. The shared fraction
+and dark navy backdrop are defined in `res/values/launcher_icons.xml`. This keeps
+the moon and seasonal decoration visible instead of enlarging and cropping the
+wolf's face. The original PNG artwork is unchanged.
+
+## Android themed icons
+
+All seven adaptive resources (default, round, and five seasonal variants) live
+in `app/src/main/res/mipmap-anydpi-v26`. Every resource also references
+`@drawable/ic_wolf_monochrome` in its `<monochrome>` layer.
+
+On Android 13+, a launcher that supports themed icons can tint this dedicated
+wolf-and-crescent vector when the user enables themed icons. Its opaque white
+fill is only an alpha mask; the launcher determines the final colors. The mark
+traces the supplied wolf-and-crescent reference into vector contours, preserving
+the flowing fur, calm eye, nose, and facial negative space. The white source
+background is transparent in the drawable. The mark uses a 108dp viewport, with
+all visible geometry inside a centered 62dp circle, within the 66dp safe zone.
+
+Android 8–12 continue to use the existing colored adaptive layers. The shared
+monochrome layer does not change seasonal selection or launcher aliases.
+
+Build verification: `./gradlew.bat :app:assembleDebug` (no tests required).
+For a device check, enable themed icons on an Android 13+ supporting launcher
+and inspect the icon at the default launcher size in both light and dark mode.
 
 `SeasonalIcon.forDate` selects the icon using the device's local calendar:
 
@@ -22,11 +49,12 @@ midnight. The receiver also checks after reboot, app updates, and clock/time-zon
 changes. It reschedules using the current time zone, including daylight saving.
 No network, additional libraries, or exact-alarm access is needed.
 
-On a fresh install, Winter is the initial launcher icon until the app is first
+On a fresh install, the base icon (`DefaultLauncher`) is the launcher icon until the app is first
 opened. After that, automatic checks are scheduled. Android can defer alarms and
 launchers can cache icons, so a change may appear after midnight. Force-stopping
 the app stops background checks until it is opened again. The application-level
-icon used by some system screens is the static Winter fallback.
+icon used by some system screens is the static base icon. The default alias is
+disabled when a seasonal alias is enabled, so only one launcher entry remains.
 
 Validation: `./gradlew.bat testDebugUnitTest assembleDebug lintDebug`.
 Date tests cover every season, the holiday boundaries across years, and leap day.

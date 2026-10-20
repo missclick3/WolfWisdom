@@ -21,7 +21,7 @@ object SeasonalIconManager {
             val enabled = icon == selected
             val current = manager.getComponentEnabledSetting(component)
             val currentlyEnabled = current == PackageManager.COMPONENT_ENABLED_STATE_ENABLED ||
-                (current == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && icon == SeasonalIcon.WINTER)
+                (current == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && icon == SeasonalIcon.DEFAULT)
             if (enabled == currentlyEnabled) null else component to if (enabled) {
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             } else {

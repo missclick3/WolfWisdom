@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fits the entire 512px illustration into the adaptive layer's inner 68dp. -->
+    <item name="launcher_artwork_inset" type="fraction">18.518518%</item>
+    <color name="launcher_icon_background">#040E1E</color>
+</resources>
