@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="close_options">Close menu</string>
+    <string name="more_options">More options</string>
     <string name="app_name">Wolf\'s wisdom</string>
+    <string name="app_title">Wolf\'s wisdom</string>
+    <string name="app_subtitle">Quotes, that stay</string>
+    <string name="quote_author">— Wolf</string>
+    <string name="share">Share</string>
+    <string name="set_widget">Set to widget</string>
+    <string name="swipe_for_next">Swipe up\\nfor next wisdom</string>
+    <string name="saved">Saved</string>
+    <string name="donate">Support creator</string>
+    <string name="contacts">Contacts</string>
+    <string name="about_app">About App</string>
+    <string name="search">Search</string>
+    <string name="search_nothing_found_title">Nothing found</string>
+    <string name="search_nothing_found_desc">Try new search or clear it.</string>
+    <string name="empty_saved_title">Here will be your wisdom</string>
+    <string name="empty_saved_description">Click heart button to save quote.</string>
+    <string name="quote_is_set_to_widget">Quote is set to widget</string>
 </resources>
