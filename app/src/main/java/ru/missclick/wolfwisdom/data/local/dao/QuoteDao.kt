@@ -1,0 +1,34 @@
+package ru.missclick.wolfwisdom.data.local.dao
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
+import ru.missclick.wolfwisdom.data.local.dto.QuoteDto
+
+@Dao
+interface QuoteDao {
+    @Query("SELECT COUNT(*) FROM quotes")
+    suspend fun count(): Int
+
+    @Insert
+    suspend fun insertAll(quotes: List<QuoteDto>)
+
+    @Query("SELECT * FROM quotes WHERE id = :id")
+    suspend fun getById(id: Long): QuoteDto?
+
+    @Query("SELECT * FROM quotes WHERE isSaved = 1 ORDER BY id")
+    fun observeSaved(): Flow<List<QuoteDto>>
+
+    @Query("UPDATE quotes SET isSaved = :isSaved WHERE id = :id")
+    suspend fun setSaved(id: Long, isSaved: Boolean): Int
+
+    @Query("""
+        SELECT * FROM quotes
+        WHERE id NOT IN (SELECT quoteId FROM quote_cycle)
+            AND (:excludedId IS NULL OR id != :excludedId)
+        ORDER BY RANDOM()
+        LIMIT 1
+    """)
+    suspend fun getRandomUnread(excludedId: Long?): QuoteDto?
+}
