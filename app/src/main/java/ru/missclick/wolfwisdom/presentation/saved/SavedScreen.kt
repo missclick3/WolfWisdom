@@ -11,6 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -110,8 +112,13 @@ fun SavedScreen(
 ) {
     val listState = rememberLazyGridState()
     val layoutDirection = LocalLayoutDirection.current
+    val contentWindowInsets = ScaffoldDefaults.contentWindowInsets
+    val windowPadding = contentWindowInsets.asPaddingValues()
+    val headerSideInset = maxOf(
+        windowPadding.calculateLeftPadding(layoutDirection),
+        windowPadding.calculateRightPadding(layoutDirection)
+    )
     val deviceConfiguration = currentDeviceConfiguration()
-    val isTablet = !deviceConfiguration.isMobile
     val hasTwoColumns = deviceConfiguration != DeviceConfiguration.MOBILE_PORTRAIT
     val horizontalPadding = when (deviceConfiguration) {
         DeviceConfiguration.TABLET_PORTRAIT -> WolfSpacing.Space24
@@ -133,13 +140,14 @@ fun SavedScreen(
         Scaffold(
             modifier = Modifier.fillMaxSize().imePadding(),
             containerColor = Color.Transparent,
+            contentWindowInsets = contentWindowInsets,
             topBar = {
                 SavedHeader(
                     state = state,
                     onAction = onAction,
                     onBackClick = onBackClick,
-                    modifier = Modifier.statusBarsPadding(),
-                    horizontalPadding = if (isTablet) horizontalPadding else WolfSpacing.Space12
+                    modifier = Modifier.padding(horizontal = headerSideInset).statusBarsPadding(),
+                    horizontalPadding = horizontalPadding
                 )
             },
             snackbarHost = snackbarHost
