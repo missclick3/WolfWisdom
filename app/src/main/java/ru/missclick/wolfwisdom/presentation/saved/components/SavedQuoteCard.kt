@@ -20,6 +20,7 @@ import ru.missclick.wolfwisdom.domain.model.Quote
 import ru.missclick.wolfwisdom.presentation.components.QuoteLandscapeCard
 import ru.missclick.wolfwisdom.presentation.components.WolfIconButton
 import ru.missclick.wolfwisdom.ui.theme.WolfColors
+import ru.missclick.wolfwisdom.ui.theme.WolfLayout
 import ru.missclick.wolfwisdom.ui.theme.WolfSpacing
 
 @Composable
@@ -40,7 +41,8 @@ internal fun SavedQuoteCard(
             quote = quote.quote,
             artwork = artwork,
             sceneIndex = sceneIndex,
-            scale = scale
+            scale = scale,
+            fixedHeight = WolfLayout.SavedCardHeight * scale
         ) {
             WolfIconButton(
                 onClick = onRemoveClick,

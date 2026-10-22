@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -23,6 +24,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -41,11 +44,13 @@ internal fun QuoteLandscapeCard(
     sceneIndex: Int,
     modifier: Modifier = Modifier,
     scale: Float = 1f,
+    fixedHeight: Dp? = null,
     actions: @Composable BoxScope.() -> Unit = {}
 ) {
     val scene = Math.floorMod(sceneIndex, WolfLayout.SavedCardHeights.size)
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .then(if (fixedHeight != null) Modifier.height(fixedHeight) else Modifier),
         shape = RoundedCornerShape(WolfRadii.Medium * scale),
         color = WolfColors.Background,
         border = BorderStroke(WolfLayout.Hairline, WolfColors.Border)
@@ -86,7 +91,11 @@ internal fun QuoteLandscapeCard(
                         lineHeight = WolfTypography.Quote.lineHeight * scale
                     ),
                     color = WolfColors.Text,
+                    // Reserve room for the author and divider before measuring a saved preview.
                     modifier = Modifier.fillMaxWidth()
+                        .then(if (fixedHeight != null) Modifier.weight(1f, fill = false) else Modifier),
+                    maxLines = if (fixedHeight != null) 4 else Int.MAX_VALUE,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = stringResource(R.string.quote_author),

@@ -30,5 +30,6 @@ object WolfLayout {
     val HorizontalMargin = WolfSpacing.Space20
     val Gutter = WolfSpacing.Space12
     val Hairline = 1.dp
-    val SavedCardHeights = listOf(176.dp, 156.dp, 156.dp, 164.dp)
+    val SavedCardHeight = 176.dp
+    val SavedCardHeights = listOf(SavedCardHeight, 156.dp, 156.dp, 164.dp)
 }
