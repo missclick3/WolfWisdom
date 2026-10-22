@@ -126,6 +126,7 @@ internal fun QuoteCardCapture(
                     quote = quote,
                     artwork = artwork,
                     sceneIndex = sceneIndex,
+                    showBorder = false,
                     modifier = Modifier.drawWithContent {
                         layer.record { this@drawWithContent.drawContent() }
                         recorded.complete(Unit)

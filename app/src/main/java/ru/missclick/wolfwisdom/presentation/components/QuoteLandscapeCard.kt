@@ -45,6 +45,7 @@ internal fun QuoteLandscapeCard(
     modifier: Modifier = Modifier,
     scale: Float = 1f,
     fixedHeight: Dp? = null,
+    showBorder: Boolean = true,
     actions: @Composable BoxScope.() -> Unit = {}
 ) {
     val scene = Math.floorMod(sceneIndex, WolfLayout.SavedCardHeights.size)
@@ -53,7 +54,7 @@ internal fun QuoteLandscapeCard(
             .then(if (fixedHeight != null) Modifier.height(fixedHeight) else Modifier),
         shape = RoundedCornerShape(WolfRadii.Medium * scale),
         color = WolfColors.Background,
-        border = BorderStroke(WolfLayout.Hairline, WolfColors.Border)
+        border = if (showBorder) BorderStroke(WolfLayout.Hairline, WolfColors.Border) else null
     ) {
         BoxWithConstraints(
             modifier = Modifier.heightIn(min = WolfLayout.SavedCardHeights[scene] * scale),
