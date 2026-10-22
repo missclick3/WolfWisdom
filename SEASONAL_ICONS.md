@@ -44,13 +44,19 @@ and inspect the icon at the default launcher size in both light and dark mode.
 The real activity stays enabled. Android 13+ applies alias changes in one batch;
 older versions enable the next icon before disabling the previous one.
 
-The app checks on every resume and schedules an inexact check for the next local
+The app schedules an inexact check on every resume for the next local
 midnight. The receiver also checks after reboot, app updates, and clock/time-zone
 changes. It reschedules using the current time zone, including daylight saving.
 No network, additional libraries, or exact-alarm access is needed.
 
+Launcher alias changes are deferred while any activity is started. After all
+activities stop, a one-second grace period allows recreation and activity
+transitions to finish; returning to the app cancels that pending change. This
+also guards updates from receivers while the app is visible. Disabling the alias
+that launched a visible task can close that task even with `DONT_KILL_APP`.
+
 On a fresh install, the base icon (`DefaultLauncher`) is the launcher icon until the app is first
-opened. After that, automatic checks are scheduled. Android can defer alarms and
+opened and then sent to the background. After that, automatic checks are scheduled. Android can defer alarms and
 launchers can cache icons, so a change may appear after midnight. Force-stopping
 the app stops background checks until it is opened again. The application-level
 icon used by some system screens is the static base icon. The default alias is
@@ -66,3 +72,11 @@ been verified here.
 On a device, open the app once, change the local date across each boundary, and
 check that one launcher icon remains and opens the app. Also check a midnight
 transition, reboot, and time-zone changes; allow the launcher time to refresh.
+
+First-launch regression check: on a clean test installation, open the base icon
+and verify the screen stays open. Rotate the device and verify it still stays
+open without changing icons. Press Home, wait at least one second (plus launcher
+refresh time), and verify the seasonal icon appears and reopens the app. Repeat
+with a date/time-zone broadcast while the app is visible: the icon should change
+only after the app goes into the background. Test on Android 12 or older and
+Android 13+ to cover both alias update paths.

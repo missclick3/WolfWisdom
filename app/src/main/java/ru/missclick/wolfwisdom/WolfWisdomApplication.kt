@@ -10,6 +10,7 @@ import ru.missclick.wolfwisdom.presentation.saved.di.savedModule
 class WolfWisdomApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        SeasonalIconManager.initialize(this)
         startKoin {
             androidContext(this@WolfWisdomApplication)
             modules(quoteDataModule, mainModule, savedModule)
