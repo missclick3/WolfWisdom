@@ -40,17 +40,18 @@ internal fun QuoteLandscapeCard(
     artwork: ImageBitmap,
     sceneIndex: Int,
     modifier: Modifier = Modifier,
+    scale: Float = 1f,
     actions: @Composable BoxScope.() -> Unit = {}
 ) {
     val scene = Math.floorMod(sceneIndex, WolfLayout.SavedCardHeights.size)
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(WolfRadii.Medium),
+        shape = RoundedCornerShape(WolfRadii.Medium * scale),
         color = WolfColors.Background,
         border = BorderStroke(WolfLayout.Hairline, WolfColors.Border)
     ) {
         BoxWithConstraints(
-            modifier = Modifier.heightIn(min = WolfLayout.SavedCardHeights[scene]),
+            modifier = Modifier.heightIn(min = WolfLayout.SavedCardHeights[scene] * scale),
             contentAlignment = Alignment.CenterStart
         ) {
             // Figma supplies the four landscapes as one vertical image strip.
@@ -71,29 +72,36 @@ internal fun QuoteLandscapeCard(
             Column(
                 modifier = Modifier.fillMaxWidth().padding(
                     start = maxWidth * (136f / 378f),
-                    end = 64.dp,
-                    top = WolfSpacing.Space24,
-                    bottom = WolfSpacing.Space16
+                    end = 64.dp * scale,
+                    top = WolfSpacing.Space24 * scale,
+                    bottom = WolfSpacing.Space16 * scale
                 ),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp * scale),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = quote,
-                    style = WolfTypography.Quote,
+                    style = WolfTypography.Quote.copy(
+                        fontSize = WolfTypography.Quote.fontSize * scale,
+                        lineHeight = WolfTypography.Quote.lineHeight * scale
+                    ),
                     color = WolfColors.Text,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Text(
                     text = stringResource(R.string.quote_author),
-                    style = WolfTypography.Label,
+                    style = WolfTypography.Label.copy(
+                        fontSize = WolfTypography.Label.fontSize * scale,
+                        lineHeight = WolfTypography.Label.lineHeight * scale
+                    ),
                     color = WolfColors.Muted,
                     textAlign = TextAlign.Center
                 )
                 MountainDivider(
-                    Modifier.padding(end = WolfSpacing.Space48)
-                        .widthIn(max = 128.dp)
-                        .fillMaxWidth()
+                    Modifier.padding(end = WolfSpacing.Space48 * scale)
+                        .widthIn(max = 128.dp * scale)
+                        .fillMaxWidth(),
+                    scale = scale
                 )
             }
             actions()

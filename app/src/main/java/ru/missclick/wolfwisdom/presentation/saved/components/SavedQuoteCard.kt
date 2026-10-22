@@ -1,7 +1,9 @@
 package ru.missclick.wolfwisdom.presentation.saved.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -29,45 +31,55 @@ internal fun SavedQuoteCard(
     onRemoveClick: () -> Unit,
     onShareClick: () -> Unit,
     onWidgetClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    scaleToWidth: Boolean = false
 ) {
-    QuoteLandscapeCard(
-        quote = quote.quote,
-        artwork = artwork,
-        sceneIndex = sceneIndex,
-        modifier = modifier
-    ) {
-        WolfIconButton(
-            onClick = onRemoveClick,
-            contentDescription = stringResource(R.string.remove_quote_from_saved),
-            modifier = Modifier.align(Alignment.TopEnd)
-                .padding(top = WolfSpacing.Space24, end = WolfSpacing.Space8)
-                .semantics { selected = true },
-            enabled = !isRemoving,
-            containerColor = WolfColors.Pressed
-        ) {
-            Icon(painterResource(R.drawable.ic_quote_saved), contentDescription = null)
-        }
-        Row(
-            modifier = Modifier.align(Alignment.BottomEnd).padding(
-                end = WolfSpacing.Space8,
-                bottom = WolfSpacing.Space4
-            ),
-            horizontalArrangement = Arrangement.spacedBy(0.dp)
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val scale = if (scaleToWidth) maxWidth / 378.dp else 1f
+        QuoteLandscapeCard(
+            quote = quote.quote,
+            artwork = artwork,
+            sceneIndex = sceneIndex,
+            scale = scale
         ) {
             WolfIconButton(
-                onClick = onShareClick,
-                contentDescription = stringResource(R.string.share),
-                containerColor = WolfColors.SavedGlass
+                onClick = onRemoveClick,
+                contentDescription = stringResource(R.string.remove_quote_from_saved),
+                modifier = Modifier.align(Alignment.TopEnd)
+                    .padding(top = WolfSpacing.Space24 * scale, end = WolfSpacing.Space8 * scale)
+                    .semantics { selected = true },
+                enabled = !isRemoving,
+                size = 40.dp * scale,
+                iconSize = WolfSpacing.Space24 * scale,
+                containerColor = WolfColors.Pressed
             ) {
-                Icon(painterResource(R.drawable.ic_quote_share), contentDescription = null)
+                Icon(painterResource(R.drawable.ic_quote_saved), contentDescription = null)
             }
-            WolfIconButton(
-                onClick = onWidgetClick,
-                contentDescription = stringResource(R.string.set_widget),
-                containerColor = WolfColors.SavedGlass
+            Row(
+                modifier = Modifier.align(Alignment.BottomEnd).padding(
+                    end = WolfSpacing.Space8 * scale,
+                    bottom = WolfSpacing.Space4 * scale
+                ),
+                horizontalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                Icon(painterResource(R.drawable.ic_quote_widget), contentDescription = null)
+                WolfIconButton(
+                    onClick = onShareClick,
+                    contentDescription = stringResource(R.string.share),
+                    size = 40.dp * scale,
+                    iconSize = WolfSpacing.Space24 * scale,
+                    containerColor = WolfColors.SavedGlass
+                ) {
+                    Icon(painterResource(R.drawable.ic_quote_share), contentDescription = null)
+                }
+                WolfIconButton(
+                    onClick = onWidgetClick,
+                    contentDescription = stringResource(R.string.set_widget),
+                    size = 40.dp * scale,
+                    iconSize = WolfSpacing.Space24 * scale,
+                    containerColor = WolfColors.SavedGlass
+                ) {
+                    Icon(painterResource(R.drawable.ic_quote_widget), contentDescription = null)
+                }
             }
         }
     }

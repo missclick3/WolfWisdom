@@ -49,7 +49,8 @@ fun QuoteActionButtons(
     isSaved: Boolean,
     onSaveClick: () -> Unit,
     onShareClick: () -> Unit,
-    onWidgetClick: () -> Unit
+    onWidgetClick: () -> Unit,
+    enabled: Boolean = true
 ) {
     Column(
         modifier = modifier.width(QuoteActionWidth),
@@ -59,6 +60,7 @@ fun QuoteActionButtons(
     ) {
         WolfIconButton(
             onClick = onSaveClick,
+            enabled = enabled,
             contentDescription = stringResource(
                 if (isSaved) R.string.remove_quote_from_saved else R.string.save_quote
             ),
@@ -81,12 +83,14 @@ fun QuoteActionButtons(
         QuoteActionWithLabel(
             iconRes = R.drawable.ic_quote_share,
             labelRes = R.string.share,
-            onClick = onShareClick
+            onClick = onShareClick,
+            enabled = enabled
         )
         QuoteActionWithLabel(
             iconRes = R.drawable.ic_quote_widget,
             labelRes = R.string.set_widget,
-            onClick = onWidgetClick
+            onClick = onWidgetClick,
+            enabled = enabled
         )
     }
 }
@@ -95,7 +99,8 @@ fun QuoteActionButtons(
 private fun QuoteActionWithLabel(
     @DrawableRes iconRes: Int,
     @StringRes labelRes: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean
 ) {
     val label = stringResource(labelRes)
     Column(
@@ -105,6 +110,7 @@ private fun QuoteActionWithLabel(
     ) {
         WolfIconButton(
             onClick = onClick,
+            enabled = enabled,
             contentDescription = label,
             size = QuoteActionButtonSize
         ) {

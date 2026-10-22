@@ -16,7 +16,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import ru.missclick.wolfwisdom.R
+import ru.missclick.wolfwisdom.ui.theme.WolfTypography
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -47,7 +51,10 @@ fun FlippingQuoteCard(
     onSaveClick: () -> Unit,
     onShareClick: () -> Unit,
     onWidgetClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showActions: Boolean = true,
+    minHeight: Dp = 0.dp,
+    quoteStyle: TextStyle = WolfTypography.HeroQuote
 ) {
     val playFlipSound = rememberQuoteFlipSound()
     val showIncoming by remember(transition?.id) {
@@ -120,7 +127,10 @@ fun FlippingQuoteCard(
             isSaved = if (showOutgoing) transition.outgoingIsSaved else isSaved,
             onSaveClick = { if (canInteract) onSaveClick() },
             onShareClick = { if (canInteract) onShareClick() },
-            onWidgetClick = { if (canInteract) onWidgetClick() }
+            onWidgetClick = { if (canInteract) onWidgetClick() },
+            showActions = showActions,
+            minHeight = minHeight,
+            quoteStyle = quoteStyle
         )
     }
 }

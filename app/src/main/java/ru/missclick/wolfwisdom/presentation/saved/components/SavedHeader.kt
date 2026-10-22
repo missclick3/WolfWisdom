@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.presentation.components.WolfIconButton
@@ -49,11 +50,12 @@ internal fun SavedHeader(
     state: SavedState,
     onAction: (SavedAction) -> Unit,
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    horizontalPadding: Dp = WolfSpacing.Space12
 ) {
     Row(
         modifier = modifier.fillMaxWidth().padding(
-            horizontal = WolfSpacing.Space12,
+            horizontal = horizontalPadding,
             vertical = WolfSpacing.Space16
         ),
         horizontalArrangement = Arrangement.spacedBy(WolfSpacing.Space12),

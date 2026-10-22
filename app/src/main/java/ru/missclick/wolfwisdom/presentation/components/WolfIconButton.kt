@@ -54,6 +54,7 @@ fun WolfIconButton(
     enabled: Boolean = true,
     size: Dp = WolfSpacing.Space40,
     containerColor: Color = WolfColors.Glass,
+    iconSize: Dp = WolfSpacing.Space24,
     content: @Composable () -> Unit
 ) {
     Surface(
@@ -84,7 +85,7 @@ fun WolfIconButton(
         Box(contentAlignment = Alignment.Center) {
             Box(
                 modifier = Modifier
-                    .size(WolfSpacing.Space24)
+                    .size(iconSize)
                     .clip(CircleShape),
                 contentAlignment = Alignment.Center,
                 propagateMinConstraints = true

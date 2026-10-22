@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.ui.theme.WolfColors
 import ru.missclick.wolfwisdom.ui.theme.WolfSpacing.Space12
@@ -27,12 +29,14 @@ fun WolfHeader(
     isOptionsVisible: Boolean = false,
     onOptionsClick: () -> Unit = {},
     onOptionsDismissRequest: () -> Unit = {},
-    onMenuItemClick: (WolfMenuAction) -> Unit = {}
+    onMenuItemClick: (WolfMenuAction) -> Unit = {},
+    compact: Boolean = false,
+    horizontalPadding: Dp = Space16
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Space16),
+            .padding(horizontal = horizontalPadding, vertical = Space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
         WolfLogoBrand()
@@ -44,14 +48,17 @@ fun WolfHeader(
         ) {
             Text(
                 text = stringResource(R.string.app_title),
-                style = WolfTypography.Title,
+                style = if (compact) WolfTypography.Title.copy(fontSize = 18.sp, lineHeight = 22.sp)
+                    else WolfTypography.Title,
                 color = WolfColors.Text,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Start
             )
             Text(
-                text = stringResource(R.string.app_subtitle),
-                style = WolfTypography.Body,
+                text = stringResource(R.string.app_subtitle).let { if (compact) it.uppercase() else it },
+                style = if (compact) WolfTypography.Body.copy(
+                    fontSize = 10.sp, lineHeight = 14.sp, letterSpacing = 1.4.sp
+                ) else WolfTypography.Body,
                 color = WolfColors.Muted,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Start
@@ -73,6 +80,6 @@ fun WolfHeader(
                 onItemClick = onMenuItemClick
             )
         }
-        Spacer(Modifier.width(Space16))
+        if (!compact) Spacer(Modifier.width(Space16))
     }
 }

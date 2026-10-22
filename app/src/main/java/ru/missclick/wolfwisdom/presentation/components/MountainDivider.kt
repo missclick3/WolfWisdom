@@ -23,11 +23,12 @@ import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 @Composable
 fun MountainDivider(
     modifier: Modifier = Modifier,
-    color: Color = WolfColors.Muted
+    color: Color = WolfColors.Muted,
+    scale: Float = 1f
 ) {
     Row(
-        modifier = modifier.width(128.dp).height(WolfSpacing.Space20),
-        horizontalArrangement = Arrangement.spacedBy(WolfSpacing.Space8),
+        modifier = modifier.width(128.dp * scale).height(WolfSpacing.Space20 * scale),
+        horizontalArrangement = Arrangement.spacedBy(WolfSpacing.Space8 * scale),
         verticalAlignment = Alignment.CenterVertically
     ) {
         HorizontalDivider(
@@ -38,7 +39,7 @@ fun MountainDivider(
         Icon(
             painter = painterResource(R.drawable.ic_quote_mountain),
             contentDescription = null,
-            modifier = Modifier.size(width = 28.dp, height = 20.dp),
+            modifier = Modifier.size(width = 28.dp * scale, height = 20.dp * scale),
             tint = color
         )
         HorizontalDivider(

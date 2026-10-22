@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -34,6 +36,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,6 +51,8 @@ import ru.missclick.wolfwisdom.presentation.components.showWolfSnackbar
 import ru.missclick.wolfwisdom.presentation.saved.components.SavedEmptyState
 import ru.missclick.wolfwisdom.presentation.saved.components.SavedHeader
 import ru.missclick.wolfwisdom.presentation.saved.components.SavedQuoteCard
+import ru.missclick.wolfwisdom.presentation.util.DeviceConfiguration
+import ru.missclick.wolfwisdom.presentation.util.currentDeviceConfiguration
 import ru.missclick.wolfwisdom.ui.theme.WolfColors
 import ru.missclick.wolfwisdom.ui.theme.WolfSpacing
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
@@ -104,7 +109,19 @@ fun SavedScreen(
     onWidgetClick: (Quote) -> Unit = {},
     snackbarHost: @Composable () -> Unit = {}
 ) {
-    val listState = rememberLazyListState()
+    val listState = rememberLazyGridState()
+    val deviceConfiguration = currentDeviceConfiguration()
+    val isTablet = !deviceConfiguration.isMobile
+    val horizontalPadding = when (deviceConfiguration) {
+        DeviceConfiguration.TABLET_PORTRAIT -> WolfSpacing.Space24
+        DeviceConfiguration.TABLET_LANDSCAPE -> WolfSpacing.Space32
+        else -> 6.dp
+    }
+    val topPadding = when (deviceConfiguration) {
+        DeviceConfiguration.TABLET_PORTRAIT -> 88.dp
+        DeviceConfiguration.TABLET_LANDSCAPE -> 56.dp
+        else -> WolfSpacing.Space16
+    }
     // Keep each quote's artwork stable when an earlier card is removed.
     val sceneIndices = remember { mutableMapOf<Long, Int>() }
     state.quotes.forEach { quote ->
@@ -120,7 +137,8 @@ fun SavedScreen(
                     state = state,
                     onAction = onAction,
                     onBackClick = onBackClick,
-                    modifier = Modifier.statusBarsPadding()
+                    modifier = Modifier.statusBarsPadding(),
+                    horizontalPadding = if (isTablet) horizontalPadding else WolfSpacing.Space12
                 )
             },
             snackbarHost = snackbarHost
@@ -157,16 +175,20 @@ fun SavedScreen(
                         )
                         else -> {
                             val artwork = ImageBitmap.imageResource(R.drawable.saved_landscapes)
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(if (isTablet) 2 else 1),
+                                modifier = Modifier.align(Alignment.TopCenter)
+                                    .widthIn(max = if (deviceConfiguration == DeviceConfiguration.MOBILE_LANDSCAPE) 390.dp else Dp.Infinity)
+                                    .fillMaxSize(),
                                 state = listState,
                                 contentPadding = PaddingValues(
-                                    start = 6.dp,
-                                    end = 6.dp,
-                                    top = WolfSpacing.Space16,
+                                    start = horizontalPadding,
+                                    end = horizontalPadding,
+                                    top = topPadding,
                                     bottom = WolfSpacing.Space16
                                 ),
-                                verticalArrangement = Arrangement.spacedBy(WolfSpacing.Space8)
+                                verticalArrangement = Arrangement.spacedBy(if (isTablet) WolfSpacing.Space16 else WolfSpacing.Space8),
+                                horizontalArrangement = Arrangement.spacedBy(WolfSpacing.Space16)
                             ) {
                                 items(visibleQuotes, key = { it.id }) { quote ->
                                     SavedQuoteCard(
@@ -177,6 +199,7 @@ fun SavedScreen(
                                         onRemoveClick = { onAction(SavedAction.RemoveQuote(quote.id)) },
                                         onShareClick = { onShareClick(quote, sceneIndices.getValue(quote.id)) },
                                         onWidgetClick = { onWidgetClick(quote) },
+                                        scaleToWidth = isTablet,
                                         modifier = Modifier.animateItem(
                                             fadeInSpec = tween(180),
                                             placementSpec = spring(
@@ -204,6 +227,9 @@ private val PreviewQuotes = listOf(
 )
 
 @Preview(name = "Saved quotes", widthDp = 390, heightDp = 844, locale = "ru")
+@Preview(name = "Phone landscape", widthDp = 844, heightDp = 390, locale = "ru")
+@Preview(name = "Tablet portrait", widthDp = 834, heightDp = 1112, locale = "ru")
+@Preview(name = "Tablet landscape", widthDp = 1112, heightDp = 834, locale = "ru")
 @Composable
 private fun Preview() {
     WolfWisdomTheme {
