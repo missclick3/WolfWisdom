@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -32,11 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -110,8 +109,10 @@ fun SavedScreen(
     snackbarHost: @Composable () -> Unit = {}
 ) {
     val listState = rememberLazyGridState()
+    val layoutDirection = LocalLayoutDirection.current
     val deviceConfiguration = currentDeviceConfiguration()
     val isTablet = !deviceConfiguration.isMobile
+    val hasTwoColumns = deviceConfiguration != DeviceConfiguration.MOBILE_PORTRAIT
     val horizontalPadding = when (deviceConfiguration) {
         DeviceConfiguration.TABLET_PORTRAIT -> WolfSpacing.Space24
         DeviceConfiguration.TABLET_LANDSCAPE -> WolfSpacing.Space32
@@ -143,9 +144,20 @@ fun SavedScreen(
             },
             snackbarHost = snackbarHost
         ) { innerPadding ->
+            // Mirror the larger safe inset so a landscape cutout or navigation bar
+            // cannot shift the grid away from the physical center of the screen.
+            val sideInset = maxOf(
+                innerPadding.calculateLeftPadding(layoutDirection),
+                innerPadding.calculateRightPadding(layoutDirection)
+            )
             AnimatedContent(
                 targetState = state,
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                modifier = Modifier.fillMaxSize().padding(
+                    start = sideInset,
+                    end = sideInset,
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding()
+                ),
                 contentKey = { contentState ->
                     when {
                         contentState.isLoading -> "loading"
@@ -176,10 +188,8 @@ fun SavedScreen(
                         else -> {
                             val artwork = ImageBitmap.imageResource(R.drawable.saved_landscapes)
                             LazyVerticalGrid(
-                                columns = GridCells.Fixed(if (isTablet) 2 else 1),
-                                modifier = Modifier.align(Alignment.TopCenter)
-                                    .widthIn(max = if (deviceConfiguration == DeviceConfiguration.MOBILE_LANDSCAPE) 390.dp else Dp.Infinity)
-                                    .fillMaxSize(),
+                                columns = GridCells.Fixed(if (hasTwoColumns) 2 else 1),
+                                modifier = Modifier.fillMaxSize(),
                                 state = listState,
                                 contentPadding = PaddingValues(
                                     start = horizontalPadding,
@@ -187,7 +197,7 @@ fun SavedScreen(
                                     top = topPadding,
                                     bottom = WolfSpacing.Space16
                                 ),
-                                verticalArrangement = Arrangement.spacedBy(if (isTablet) WolfSpacing.Space16 else WolfSpacing.Space8),
+                                verticalArrangement = Arrangement.spacedBy(if (hasTwoColumns) WolfSpacing.Space16 else WolfSpacing.Space8),
                                 horizontalArrangement = Arrangement.spacedBy(WolfSpacing.Space16)
                             ) {
                                 items(visibleQuotes, key = { it.id }) { quote ->
@@ -199,7 +209,7 @@ fun SavedScreen(
                                         onRemoveClick = { onAction(SavedAction.RemoveQuote(quote.id)) },
                                         onShareClick = { onShareClick(quote, sceneIndices.getValue(quote.id)) },
                                         onWidgetClick = { onWidgetClick(quote) },
-                                        scaleToWidth = isTablet,
+                                        scaleToWidth = hasTwoColumns,
                                         modifier = Modifier.animateItem(
                                             fadeInSpec = tween(180),
                                             placementSpec = spring(

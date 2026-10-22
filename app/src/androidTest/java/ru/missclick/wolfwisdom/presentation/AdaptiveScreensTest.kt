@@ -128,7 +128,7 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
     }
 
     @Test
-    fun savedQuotesUseCenteredPhoneColumnOrTwoTabletColumns() {
+    fun savedQuotesUseOnePortraitPhoneColumnAndTwoColumnsOtherwise() {
         var removedId: Long? = null
         compose.setContent {
             ReferenceWindow {
@@ -140,13 +140,9 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
         }
         val first = compose.onNodeWithText(quotes[0].quote).fetchSemanticsNode().boundsInRoot
         val second = compose.onNodeWithText(quotes[1].quote).fetchSemanticsNode().boundsInRoot
-        if (minOf(width, height) < 600) {
+        if (minOf(width, height) < 600 && width <= height) {
             assertEquals(first.left, second.left, 1f)
             assertTrue(second.top > first.top)
-            if (width > height) {
-                // A landscape phone must retain portrait-sized cards in the middle.
-                assertTrue(first.left > width / 3f)
-            }
         } else {
             assertTrue(second.left > first.right)
         }
