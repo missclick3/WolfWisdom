@@ -149,6 +149,8 @@ fun MainScreen(
                         )
                 ) {
                     WolfHeader(
+                        horizontalPadding = WolfSpacing.Space20,
+                        optionsAlignment = Alignment.CenterEnd,
                         isOptionsVisible = state.isOptionsVisible,
                         onOptionsClick = { onAction(MainAction.ToggleOptions) },
                         onOptionsDismissRequest = { onAction(MainAction.DismissOptions) },
@@ -208,6 +210,7 @@ private fun AdaptiveMainContent(
     modifier: Modifier = Modifier
 ) {
     val isPhoneLandscape = deviceConfiguration == DeviceConfiguration.MOBILE_LANDSCAPE
+    val actionEndPadding = if (isPhoneLandscape) WolfSpacing.Space8 else WolfSpacing.Space16
     val quoteWidth = when (deviceConfiguration) {
         DeviceConfiguration.TABLET_PORTRAIT -> 560.dp
         DeviceConfiguration.TABLET_LANDSCAPE -> 504.dp
@@ -235,6 +238,7 @@ private fun AdaptiveMainContent(
             modifier = Modifier.align(Alignment.TopCenter),
             compact = true,
             horizontalPadding = if (isPhoneLandscape) WolfSpacing.Space16 else WolfSpacing.Space24,
+            endPadding = actionEndPadding,
             isOptionsVisible = state.isOptionsVisible,
             onOptionsClick = { onAction(MainAction.ToggleOptions) },
             onOptionsDismissRequest = { onAction(MainAction.DismissOptions) },
@@ -275,10 +279,10 @@ private fun AdaptiveMainContent(
                 )
             }
             val actionsModifier = if (isPhoneLandscape) {
-                Modifier.align(Alignment.BottomEnd).padding(end = WolfSpacing.Space8)
+                Modifier.align(Alignment.BottomEnd).padding(end = actionEndPadding)
             } else {
                 Modifier.align(Alignment.CenterEnd)
-                    .padding(end = WolfSpacing.Space16)
+                    .padding(end = actionEndPadding)
                     .offset(y = if (deviceConfiguration == DeviceConfiguration.TABLET_PORTRAIT) 160.dp else 96.dp)
             }
             Column(

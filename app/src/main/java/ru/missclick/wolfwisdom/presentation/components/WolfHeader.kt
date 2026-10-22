@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.ui.theme.WolfColors
@@ -31,12 +32,14 @@ fun WolfHeader(
     onOptionsDismissRequest: () -> Unit = {},
     onMenuItemClick: (WolfMenuAction) -> Unit = {},
     compact: Boolean = false,
-    horizontalPadding: Dp = Space16
+    horizontalPadding: Dp = Space16,
+    endPadding: Dp = horizontalPadding,
+    optionsAlignment: Alignment = Alignment.Center
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = horizontalPadding, vertical = Space16),
+            .padding(start = horizontalPadding, end = endPadding, top = Space16, bottom = Space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
         WolfLogoBrand()
@@ -65,9 +68,13 @@ fun WolfHeader(
             )
         }
         Spacer(Modifier.width(Space12))
-        Box {
+        Box(
+            modifier = Modifier.width(QuoteActionWidth),
+            contentAlignment = optionsAlignment
+        ) {
             WolfIconButton(
                 onClick = onOptionsClick,
+                size = 44.dp,
                 contentDescription = stringResource(
                     if (isOptionsVisible) R.string.close_options else R.string.more_options
                 )
@@ -80,6 +87,5 @@ fun WolfHeader(
                 onItemClick = onMenuItemClick
             )
         }
-        if (!compact) Spacer(Modifier.width(Space16))
     }
 }
