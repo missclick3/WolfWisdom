@@ -56,10 +56,13 @@ private const val PreviewQuote = "Мечтай масштабно. Делай п
 @Composable
 fun MainRoot(
     viewModel: MainViewModel = koinViewModel(),
-    onMenuItemClick: (WolfMenuAction) -> Unit = {},
     onShareClick: (String) -> Unit = {},
     onWidgetClick: () -> Unit = {},
-    onNavigateToSaved: () -> Unit = {}
+    onNavigateToSaved: () -> Unit = {},
+    onNavigateToAchievements: () -> Unit = {},
+    onSupportClick: () -> Unit = {},
+    onNavigateToContacts: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -82,26 +85,27 @@ fun MainRoot(
         }
     }
 
-    BackHandler(enabled = !state.isOptionsVisible) {
-        if (snackbarHostState.currentSnackbarData != null) {
-            activity?.finish()
-        } else {
-            viewModel.onAction(MainAction.BackPressed)
-        }
-    }
-
     MainScreen(
         state = state,
-        onAction = viewModel::onAction,
-        onMenuItemClick = { action ->
-            if (action == WolfMenuAction.SAVED) {
-                onNavigateToSaved()
-            } else {
-                onMenuItemClick(action)
+        onAction = { action ->
+            when (action) {
+                MainAction.BackPressed -> {
+                    if (snackbarHostState.currentSnackbarData != null) {
+                        activity?.finish()
+                    } else {
+                        viewModel.onAction(action)
+                    }
+                }
+                MainAction.NavigateToSaved -> onNavigateToSaved()
+                MainAction.NavigateToAchievements -> onNavigateToAchievements()
+                MainAction.SupportClick -> onSupportClick()
+                MainAction.NavigateToContacts -> onNavigateToContacts()
+                MainAction.NavigateToAbout -> onNavigateToAbout()
+                MainAction.ShareClick -> onShareClick(state.quote)
+                MainAction.WidgetClick -> onWidgetClick()
+                else -> viewModel.onAction(action)
             }
         },
-        onShareClick = { onShareClick(state.quote) },
-        onWidgetClick = onWidgetClick,
         snackbarHost = { WolfSnackbarHost(hostState = snackbarHostState) }
     )
 }
@@ -110,13 +114,13 @@ fun MainRoot(
 fun MainScreen(
     state: MainState,
     onAction: (MainAction) -> Unit,
-    onMenuItemClick: (WolfMenuAction) -> Unit = {},
-    onShareClick: () -> Unit = {},
-    onWidgetClick: () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
 ) {
     val swipeState = rememberQuoteSwipeState()
     val deviceConfiguration = currentDeviceConfiguration()
+    BackHandler(enabled = !state.isOptionsVisible) {
+        onAction(MainAction.BackPressed)
+    }
     WolfWisdomScreen {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -129,9 +133,6 @@ fun MainScreen(
                     deviceConfiguration = deviceConfiguration,
                     swipeState = swipeState,
                     onAction = onAction,
-                    onMenuItemClick = onMenuItemClick,
-                    onShareClick = onShareClick,
-                    onWidgetClick = onWidgetClick,
                     modifier = Modifier.fillMaxSize().padding(innerPadding)
                 )
             } else {
@@ -154,7 +155,7 @@ fun MainScreen(
                         isOptionsVisible = state.isOptionsVisible,
                         onOptionsClick = { onAction(MainAction.ToggleOptions) },
                         onOptionsDismissRequest = { onAction(MainAction.DismissOptions) },
-                        onMenuItemClick = onMenuItemClick
+                        onMenuItemClick = { onAction(it.toMainAction()) }
                     )
                     Column(
                         modifier = Modifier
@@ -178,8 +179,8 @@ fun MainScreen(
                                 onSwipeDown = { onAction(MainAction.SwipeDown) },
                                 onAnimationFinished = { onAction(MainAction.QuoteAnimationFinished(it)) },
                                 onSaveClick = { onAction(MainAction.ToggleQuoteSaved) },
-                                onShareClick = onShareClick,
-                                onWidgetClick = onWidgetClick
+                                onShareClick = { onAction(MainAction.ShareClick) },
+                                onWidgetClick = { onAction(MainAction.WidgetClick) }
                             )
                         }
                     }
@@ -204,9 +205,6 @@ private fun AdaptiveMainContent(
     deviceConfiguration: DeviceConfiguration,
     swipeState: QuoteSwipeState,
     onAction: (MainAction) -> Unit,
-    onMenuItemClick: (WolfMenuAction) -> Unit,
-    onShareClick: () -> Unit,
-    onWidgetClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val isPhoneLandscape = deviceConfiguration == DeviceConfiguration.MOBILE_LANDSCAPE
@@ -242,7 +240,7 @@ private fun AdaptiveMainContent(
             isOptionsVisible = state.isOptionsVisible,
             onOptionsClick = { onAction(MainAction.ToggleOptions) },
             onOptionsDismissRequest = { onAction(MainAction.DismissOptions) },
-            onMenuItemClick = onMenuItemClick
+            onMenuItemClick = { onAction(it.toMainAction()) }
         )
         if (state.quote.isNotEmpty()) {
             // Reserve matching space on both sides so the card stays centered on the screen.
@@ -267,8 +265,8 @@ private fun AdaptiveMainContent(
                     onSwipeDown = { onAction(MainAction.SwipeDown) },
                     onAnimationFinished = { onAction(MainAction.QuoteAnimationFinished(it)) },
                     onSaveClick = { onAction(MainAction.ToggleQuoteSaved) },
-                    onShareClick = onShareClick,
-                    onWidgetClick = onWidgetClick,
+                    onShareClick = { onAction(MainAction.ShareClick) },
+                    onWidgetClick = { onAction(MainAction.WidgetClick) },
                     showActions = false,
                     minHeight = quoteHeight,
                     quoteStyle = WolfTypography.Quote.copy(
@@ -294,8 +292,8 @@ private fun AdaptiveMainContent(
                     isSaved = state.isQuoteSaved,
                     enabled = canInteract,
                     onSaveClick = { onAction(MainAction.ToggleQuoteSaved) },
-                    onShareClick = onShareClick,
-                    onWidgetClick = onWidgetClick
+                    onShareClick = { onAction(MainAction.ShareClick) },
+                    onWidgetClick = { onAction(MainAction.WidgetClick) }
                 )
             }
         }
@@ -306,6 +304,14 @@ private fun AdaptiveMainContent(
             )
         )
     }
+}
+
+private fun WolfMenuAction.toMainAction(): MainAction = when (this) {
+    WolfMenuAction.SAVED -> MainAction.NavigateToSaved
+    WolfMenuAction.ACHIEVEMENTS -> MainAction.NavigateToAchievements
+    WolfMenuAction.SUPPORT -> MainAction.SupportClick
+    WolfMenuAction.CONTACTS -> MainAction.NavigateToContacts
+    WolfMenuAction.ABOUT -> MainAction.NavigateToAbout
 }
 
 @Preview(name = "Phone portrait", widthDp = 390, heightDp = 844, locale = "ru")

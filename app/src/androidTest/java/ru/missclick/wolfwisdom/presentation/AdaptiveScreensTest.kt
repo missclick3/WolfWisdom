@@ -73,8 +73,13 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
             ReferenceWindow {
                 MainScreen(
                     state = MainState(quote = quotes.first().quote),
-                    onAction = { if (it == MainAction.ToggleQuoteSaved) saves++ },
-                    onShareClick = { shares++ }
+                    onAction = {
+                        when (it) {
+                            MainAction.ToggleQuoteSaved -> saves++
+                            MainAction.ShareClick -> shares++
+                            else -> Unit
+                        }
+                    }
                 )
             }
         }

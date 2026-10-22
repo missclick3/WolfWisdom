@@ -49,6 +49,14 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
 
     fun onAction(action: MainAction) {
         when (action) {
+            // These actions are handled by MainRoot.
+            MainAction.NavigateToSaved,
+            MainAction.NavigateToAchievements,
+            MainAction.SupportClick,
+            MainAction.NavigateToContacts,
+            MainAction.NavigateToAbout,
+            MainAction.ShareClick,
+            MainAction.WidgetClick -> Unit
             MainAction.BackPressed -> viewModelScope.launch {
                 effectChannel.send(MainEffect.ShowCloseSnackbar)
             }
