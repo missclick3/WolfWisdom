@@ -6,13 +6,20 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -21,6 +28,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
@@ -75,6 +84,46 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
         compose.runOnIdle {
             assertEquals(1, saves)
             assertEquals(1, shares)
+        }
+    }
+
+    @Test
+    fun draggingFromTheCardFlipsInBothDirections() {
+        var backwards by mutableStateOf(false)
+        val actions = mutableListOf<MainAction>()
+        compose.setContent {
+            ReferenceWindow {
+                key(backwards) {
+                    MainScreen(
+                        state = MainState(quote = quotes.first().quote, canGoBack = true),
+                        onAction = { actions += it }
+                    )
+                }
+            }
+        }
+        for (isBackwards in listOf(false, true)) {
+            compose.runOnIdle { backwards = isBackwards }
+            val screen = compose.onNodeWithTag("screen")
+            val screenBounds = screen.fetchSemanticsNode().boundsInRoot
+            val cardBounds = compose.onNode(
+                SemanticsMatcher.keyIsDefined(SemanticsActions.CustomActions)
+            ).fetchSemanticsNode().boundsInRoot
+            val start = cardBounds.center - screenBounds.topLeft
+            val distance = minOf(240f, if (isBackwards) height - start.y - 8f else start.y - 8f)
+            screen.performTouchInput {
+                swipe(
+                    start = start,
+                    end = start + Offset(0f, if (isBackwards) distance else -distance),
+                    durationMillis = 600
+                )
+            }
+            compose.runOnIdle {
+                assertEquals(
+                    if (isBackwards) listOf(MainAction.SwipeUp, MainAction.SwipeDown)
+                    else listOf(MainAction.SwipeUp),
+                    actions
+                )
+            }
         }
     }
 

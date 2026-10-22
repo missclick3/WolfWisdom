@@ -222,16 +222,15 @@ private fun AdaptiveMainContent(
         state.quoteTransition == null && !state.isOptionsVisible && !swipeState.isDragging &&
         !swipeState.isAwaitingNavigation && !swipeState.isSettling
 
-    BoxWithConstraints(
-        modifier = modifier.quoteSwipeGestures(
-            state = swipeState,
-            enabled = state.quote.isNotEmpty() && !state.isNavigating && !state.isSavingQuote &&
-                state.quoteTransition == null && !state.isOptionsVisible,
-            canGoBack = state.canGoBack,
-            onSwipeUp = { onAction(MainAction.SwipeUp) },
-            onSwipeDown = { onAction(MainAction.SwipeDown) }
-        )
-    ) {
+    val swipeModifier = Modifier.quoteSwipeGestures(
+        state = swipeState,
+        enabled = state.quote.isNotEmpty() && !state.isNavigating && !state.isSavingQuote &&
+            state.quoteTransition == null && !state.isOptionsVisible,
+        canGoBack = state.canGoBack,
+        onSwipeUp = { onAction(MainAction.SwipeUp) },
+        onSwipeDown = { onAction(MainAction.SwipeDown) }
+    )
+    BoxWithConstraints(modifier = modifier.then(swipeModifier)) {
         WolfHeader(
             modifier = Modifier.align(Alignment.TopCenter),
             compact = true,
@@ -243,7 +242,7 @@ private fun AdaptiveMainContent(
         )
         if (state.quote.isNotEmpty()) {
             // Reserve matching space on both sides so the card stays centered on the screen.
-            // Long quotes scroll inside this area rather than covering the header or hint.
+            // The bounded area keeps long quotes clear of the header and hint.
             Column(
                 modifier = Modifier.align(Alignment.Center)
                     .offset(y = if (deviceConfiguration == DeviceConfiguration.TABLET_PORTRAIT) 32.dp else 0.dp)
@@ -252,6 +251,9 @@ private fun AdaptiveMainContent(
                     .verticalScroll(rememberScrollState())
             ) {
                 FlippingQuoteCard(
+                    // Handle drags inside the scroll container before it consumes them.
+                    // The surrounding screen uses the same state and callbacks.
+                    modifier = swipeModifier,
                     quote = state.quote,
                     isSaved = state.isQuoteSaved,
                     swipeState = swipeState,
