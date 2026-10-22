@@ -35,10 +35,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.lerp
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.presentation.components.WolfIconButton
 import ru.missclick.wolfwisdom.presentation.saved.SavedAction
 import ru.missclick.wolfwisdom.presentation.saved.SavedState
+import ru.missclick.wolfwisdom.presentation.saved.SavedHeaderDimensions
 import ru.missclick.wolfwisdom.ui.theme.WolfColors
 import ru.missclick.wolfwisdom.ui.theme.WolfLayout
 import ru.missclick.wolfwisdom.ui.theme.WolfRadii
@@ -51,13 +53,22 @@ internal fun SavedHeader(
     onAction: (SavedAction) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    horizontalPadding: Dp = WolfSpacing.Space12
+    horizontalPadding: Dp = WolfSpacing.Space12,
+    dimensions: SavedHeaderDimensions,
+    collapseProgress: () -> Float
 ) {
+    val progress = collapseProgress()
     Row(
-        modifier = modifier.fillMaxWidth().padding(
-            horizontal = horizontalPadding,
-            vertical = WolfSpacing.Space16
-        ),
+        modifier = modifier.fillMaxWidth()
+            .height(lerp(dimensions.expandedHeight, dimensions.collapsedHeight, progress))
+            .padding(
+                horizontal = horizontalPadding,
+                vertical = lerp(
+                    (dimensions.expandedHeight - dimensions.collapsedHeight + 8.dp) / 2,
+                    4.dp,
+                    progress
+                )
+            ),
         horizontalArrangement = Arrangement.spacedBy(WolfSpacing.Space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -80,7 +91,7 @@ internal fun SavedHeader(
             Text(
                 text = stringResource(R.string.saved),
                 modifier = Modifier.weight(1f),
-                style = WolfTypography.Title,
+                style = WolfTypography.Title.copy(fontSize = lerp(22.sp, 20.sp, progress)),
                 color = WolfColors.Text,
                 textAlign = TextAlign.Center
             )

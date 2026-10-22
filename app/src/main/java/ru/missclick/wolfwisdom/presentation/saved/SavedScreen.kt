@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -32,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -120,6 +123,12 @@ fun SavedScreen(
     )
     val deviceConfiguration = currentDeviceConfiguration()
     val hasTwoColumns = deviceConfiguration != DeviceConfiguration.MOBILE_PORTRAIT
+    val columns = if (hasTwoColumns) 2 else 1
+    val headerDimensions = savedHeaderDimensions()
+    val collapseProgress = rememberSavedHeaderProgress(
+        listState, columns, headerDimensions.collapseDistance
+    )
+    val expandedHeaderSpace = headerDimensions.expandedHeight - headerDimensions.collapsedHeight
     val horizontalPadding = when (deviceConfiguration) {
         DeviceConfiguration.TABLET_PORTRAIT -> WolfSpacing.Space24
         DeviceConfiguration.TABLET_LANDSCAPE -> WolfSpacing.Space32
@@ -137,102 +146,115 @@ fun SavedScreen(
     }
 
     WolfWisdomScreen {
-        Scaffold(
-            modifier = Modifier.fillMaxSize().imePadding(),
-            containerColor = Color.Transparent,
-            contentWindowInsets = contentWindowInsets,
-            topBar = {
-                SavedHeader(
-                    state = state,
-                    onAction = onAction,
-                    onBackClick = onBackClick,
-                    modifier = Modifier.padding(horizontal = headerSideInset).statusBarsPadding(),
-                    horizontalPadding = horizontalPadding
-                )
-            },
-            snackbarHost = snackbarHost
-        ) { innerPadding ->
-            // Mirror the larger safe inset so a landscape cutout or navigation bar
-            // cannot shift the grid away from the physical center of the screen.
-            val sideInset = maxOf(
-                innerPadding.calculateLeftPadding(layoutDirection),
-                innerPadding.calculateRightPadding(layoutDirection)
-            )
-            AnimatedContent(
-                targetState = state,
-                modifier = Modifier.fillMaxSize().padding(
-                    start = sideInset,
-                    end = sideInset,
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding()
-                ),
-                contentKey = { contentState ->
-                    when {
-                        contentState.isLoading -> "loading"
-                        contentState.visibleQuotes.isEmpty() -> "empty"
-                        else -> "quotes"
-                    }
+        Box(Modifier.fillMaxSize()) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize().imePadding(),
+                containerColor = Color.Transparent,
+                contentWindowInsets = contentWindowInsets,
+                topBar = {
+                    // Reserve only the compact bar. The expanded part overlays a fixed
+                    // grid viewport, so changing header size never changes scroll geometry.
+                    Box(Modifier.statusBarsPadding().height(headerDimensions.collapsedHeight))
                 },
-                transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(180)) },
-                label = "Saved content"
-            ) { contentState ->
-                val visibleQuotes = remember(
-                    contentState.quotes, contentState.searchQuery, contentState.isSearchVisible
-                ) { contentState.visibleQuotes }
-                Box(Modifier.fillMaxSize()) {
-                    when {
-                        contentState.isLoading -> CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center),
-                            color = WolfColors.Accent
-                        )
-                        visibleQuotes.isEmpty() -> SavedEmptyState(
-                            isSearchResult = contentState.quotes.isNotEmpty(),
-                            modifier = Modifier.align(Alignment.Center).padding(
-                                start = WolfSpacing.Space20,
-                                end = WolfSpacing.Space20,
-                                bottom = WolfSpacing.Space32
+                snackbarHost = snackbarHost
+            ) { innerPadding ->
+                // Mirror the larger safe inset so a landscape cutout or navigation bar
+                // cannot shift the grid away from the physical center of the screen.
+                val sideInset = maxOf(
+                    innerPadding.calculateLeftPadding(layoutDirection),
+                    innerPadding.calculateRightPadding(layoutDirection)
+                )
+                AnimatedContent(
+                    targetState = state,
+                    modifier = Modifier.fillMaxSize().padding(
+                        start = sideInset,
+                        end = sideInset,
+                        top = innerPadding.calculateTopPadding(),
+                        bottom = innerPadding.calculateBottomPadding()
+                    ).drawWithContent {
+                        // Clip cards below the current header without resizing/re-padding
+                        // the grid. The full-screen background remains untouched.
+                        clipRect(top = expandedHeaderSpace.toPx() * (1f - collapseProgress.value)) {
+                            this@drawWithContent.drawContent()
+                        }
+                    },
+                    contentKey = { contentState ->
+                        when {
+                            contentState.isLoading -> "loading"
+                            contentState.visibleQuotes.isEmpty() -> "empty"
+                            else -> "quotes"
+                        }
+                    },
+                    transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(180)) },
+                    label = "Saved content"
+                ) { contentState ->
+                    val visibleQuotes = remember(
+                        contentState.quotes, contentState.searchQuery, contentState.isSearchVisible
+                    ) { contentState.visibleQuotes }
+                    Box(Modifier.fillMaxSize()) {
+                        when {
+                            contentState.isLoading -> CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center),
+                                color = WolfColors.Accent
                             )
-                        )
-                        else -> {
-                            val artwork = ImageBitmap.imageResource(R.drawable.saved_landscapes)
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(if (hasTwoColumns) 2 else 1),
-                                modifier = Modifier.fillMaxSize(),
-                                state = listState,
-                                contentPadding = PaddingValues(
-                                    start = horizontalPadding,
-                                    end = horizontalPadding,
-                                    top = topPadding,
-                                    bottom = WolfSpacing.Space16
-                                ),
-                                verticalArrangement = Arrangement.spacedBy(if (hasTwoColumns) WolfSpacing.Space16 else WolfSpacing.Space8),
-                                horizontalArrangement = Arrangement.spacedBy(WolfSpacing.Space16)
-                            ) {
-                                items(visibleQuotes, key = { it.id }) { quote ->
-                                    SavedQuoteCard(
-                                        quote = quote,
-                                        artwork = artwork,
-                                        sceneIndex = sceneIndices.getValue(quote.id),
-                                        isRemoving = quote.id in contentState.removingQuoteIds,
-                                        onRemoveClick = { onAction(SavedAction.RemoveQuote(quote.id)) },
-                                        onShareClick = { onShareClick(quote, sceneIndices.getValue(quote.id)) },
-                                        onWidgetClick = { onWidgetClick(quote) },
-                                        scaleToWidth = hasTwoColumns,
-                                        modifier = Modifier.animateItem(
-                                            fadeInSpec = tween(180),
-                                            placementSpec = spring(
-                                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                                stiffness = Spring.StiffnessMediumLow
-                                            ),
-                                            fadeOutSpec = tween(180)
+                            visibleQuotes.isEmpty() -> SavedEmptyState(
+                                isSearchResult = contentState.quotes.isNotEmpty(),
+                                modifier = Modifier.align(Alignment.Center).padding(
+                                    start = WolfSpacing.Space20,
+                                    end = WolfSpacing.Space20,
+                                    bottom = WolfSpacing.Space32
+                                )
+                            )
+                            else -> {
+                                val artwork = ImageBitmap.imageResource(R.drawable.saved_landscapes)
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(columns),
+                                    modifier = Modifier.fillMaxSize(),
+                                    state = listState,
+                                    contentPadding = PaddingValues(
+                                        start = horizontalPadding,
+                                        end = horizontalPadding,
+                                        top = topPadding + expandedHeaderSpace,
+                                        bottom = WolfSpacing.Space16
+                                    ),
+                                    verticalArrangement = Arrangement.spacedBy(if (hasTwoColumns) WolfSpacing.Space16 else WolfSpacing.Space8),
+                                    horizontalArrangement = Arrangement.spacedBy(WolfSpacing.Space16)
+                                ) {
+                                    items(visibleQuotes, key = { it.id }) { quote ->
+                                        SavedQuoteCard(
+                                            quote = quote,
+                                            artwork = artwork,
+                                            sceneIndex = sceneIndices.getValue(quote.id),
+                                            isRemoving = quote.id in contentState.removingQuoteIds,
+                                            onRemoveClick = { onAction(SavedAction.RemoveQuote(quote.id)) },
+                                            onShareClick = { onShareClick(quote, sceneIndices.getValue(quote.id)) },
+                                            onWidgetClick = { onWidgetClick(quote) },
+                                            scaleToWidth = hasTwoColumns,
+                                            modifier = Modifier.animateItem(
+                                                fadeInSpec = tween(180),
+                                                placementSpec = spring(
+                                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                                    stiffness = Spring.StiffnessMediumLow
+                                                ),
+                                                fadeOutSpec = tween(180)
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+            SavedHeader(
+                state = state,
+                onAction = onAction,
+                onBackClick = onBackClick,
+                modifier = Modifier.padding(horizontal = headerSideInset).statusBarsPadding(),
+                horizontalPadding = horizontalPadding,
+                dimensions = headerDimensions,
+                collapseProgress = { collapseProgress.value }
+            )
         }
     }
 }
