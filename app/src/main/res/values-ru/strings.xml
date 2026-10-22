@@ -31,4 +31,5 @@
     <string name="close_saved_search">Закрыть поиск</string>
     <string name="saved_load_error">Не удалось загрузить сохранённые цитаты</string>
     <string name="saved_remove_error">Не удалось удалить цитату. Попробуй ещё раз.</string>
+    <string name="quote_share_error">Не удалось поделиться цитатой. Попробуй ещё раз.</string>
 </resources>

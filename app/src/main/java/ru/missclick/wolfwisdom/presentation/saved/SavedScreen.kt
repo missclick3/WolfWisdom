@@ -1,6 +1,5 @@
 package ru.missclick.wolfwisdom.presentation.saved
 
-import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -30,7 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,20 +56,21 @@ import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 fun SavedRoot(
     viewModel: SavedViewModel = koinViewModel(),
     onBackClick: () -> Unit = {},
+    onShareClick: (Quote, Int) -> Unit = { _, _ -> },
     onWidgetClick: (Quote) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val keyboard = LocalSoftwareKeyboardController.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(viewModel, lifecycleOwner, context) {
+    LaunchedEffect(viewModel, lifecycleOwner, resources) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collectLatest { effect ->
                 when (effect) {
                     is SavedEffect.ShowError -> snackbarHostState.showWolfSnackbar(
-                        headline = context.getString(effect.messageRes)
+                        headline = resources.getString(effect.messageRes)
                     )
                 }
             }
@@ -89,12 +89,7 @@ fun SavedRoot(
             keyboard?.hide()
             onBackClick()
         },
-        onShareClick = { quote ->
-            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, quote.quote)
-            }, null))
-        },
+        onShareClick = onShareClick,
         onWidgetClick = onWidgetClick,
         snackbarHost = { WolfSnackbarHost(snackbarHostState) }
     )
@@ -105,7 +100,7 @@ fun SavedScreen(
     state: SavedState,
     onAction: (SavedAction) -> Unit,
     onBackClick: () -> Unit = {},
-    onShareClick: (Quote) -> Unit = {},
+    onShareClick: (Quote, Int) -> Unit = { _, _ -> },
     onWidgetClick: (Quote) -> Unit = {},
     snackbarHost: @Composable () -> Unit = {}
 ) {
@@ -180,7 +175,7 @@ fun SavedScreen(
                                         sceneIndex = sceneIndices.getValue(quote.id),
                                         isRemoving = quote.id in contentState.removingQuoteIds,
                                         onRemoveClick = { onAction(SavedAction.RemoveQuote(quote.id)) },
-                                        onShareClick = { onShareClick(quote) },
+                                        onShareClick = { onShareClick(quote, sceneIndices.getValue(quote.id)) },
                                         onWidgetClick = { onWidgetClick(quote) },
                                         modifier = Modifier.animateItem(
                                             fadeInSpec = tween(180),

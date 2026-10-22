@@ -43,7 +43,7 @@ private const val PreviewQuote = "Мечтай масштабно. Делай п
 fun MainRoot(
     viewModel: MainViewModel = koinViewModel(),
     onMenuItemClick: (WolfMenuAction) -> Unit = {},
-    onShareClick: () -> Unit = {},
+    onShareClick: (String) -> Unit = {},
     onWidgetClick: () -> Unit = {},
     onNavigateToSaved: () -> Unit = {}
 ) {
@@ -86,7 +86,7 @@ fun MainRoot(
                 onMenuItemClick(action)
             }
         },
-        onShareClick = onShareClick,
+        onShareClick = { onShareClick(state.quote) },
         onWidgetClick = onWidgetClick,
         snackbarHost = { WolfSnackbarHost(hostState = snackbarHostState) }
     )

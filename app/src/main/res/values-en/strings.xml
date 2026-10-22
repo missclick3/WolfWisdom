@@ -31,4 +31,5 @@
     <string name="close_saved_search">Close search</string>
     <string name="saved_load_error">Could not load saved quotes</string>
     <string name="saved_remove_error">Could not remove the quote. Please try again.</string>
+    <string name="quote_share_error">Could not share the quote. Please try again.</string>
 </resources>

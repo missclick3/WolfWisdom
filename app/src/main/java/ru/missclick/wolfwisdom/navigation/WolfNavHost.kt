@@ -8,28 +8,34 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ru.missclick.wolfwisdom.presentation.main.MainRoot
 import ru.missclick.wolfwisdom.presentation.saved.SavedRoot
+import ru.missclick.wolfwisdom.presentation.sharing.QuoteShareHost
 
 @Composable
 fun WolfNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Main,
-        modifier = modifier
-    ) {
-        composable<Screen.Main> {
-            MainRoot(
-                onNavigateToSaved = {
-                    navController.navigate(Screen.Saved) {
-                        launchSingleTop = true
+    QuoteShareHost(modifier) { shareQuote ->
+        NavHost(
+            navController = navController,
+            startDestination = Screen.Main
+        ) {
+            composable<Screen.Main> {
+                MainRoot(
+                    onShareClick = { shareQuote(it, null) },
+                    onNavigateToSaved = {
+                        navController.navigate(Screen.Saved) {
+                            launchSingleTop = true
+                        }
                     }
-                }
-            )
-        }
-        composable<Screen.Saved> {
-            SavedRoot(onBackClick = { navController.popBackStack() })
+                )
+            }
+            composable<Screen.Saved> {
+                SavedRoot(
+                    onBackClick = { navController.popBackStack() },
+                    onShareClick = { quote, scene -> shareQuote(quote.quote, scene) }
+                )
+            }
         }
     }
 }
