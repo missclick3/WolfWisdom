@@ -65,15 +65,6 @@ internal fun SavedQuoteCard(
                 horizontalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 WolfIconButton(
-                    onClick = onShareClick,
-                    contentDescription = stringResource(R.string.share),
-                    size = 40.dp * scale,
-                    iconSize = WolfSpacing.Space24 * scale,
-                    containerColor = WolfColors.SavedGlass
-                ) {
-                    Icon(painterResource(R.drawable.ic_quote_share), contentDescription = null)
-                }
-                WolfIconButton(
                     onClick = onWidgetClick,
                     contentDescription = stringResource(R.string.set_widget),
                     size = 40.dp * scale,
@@ -81,6 +72,15 @@ internal fun SavedQuoteCard(
                     containerColor = WolfColors.SavedGlass
                 ) {
                     Icon(painterResource(R.drawable.ic_quote_widget), contentDescription = null)
+                }
+                WolfIconButton(
+                    onClick = onShareClick,
+                    contentDescription = stringResource(R.string.share),
+                    size = 40.dp * scale,
+                    iconSize = WolfSpacing.Space24 * scale,
+                    containerColor = WolfColors.SavedGlass
+                ) {
+                    Icon(painterResource(R.drawable.ic_quote_share), contentDescription = null)
                 }
             }
         }
