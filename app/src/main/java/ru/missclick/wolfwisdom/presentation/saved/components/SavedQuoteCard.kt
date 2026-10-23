@@ -42,7 +42,8 @@ internal fun SavedQuoteCard(
             artwork = artwork,
             sceneIndex = sceneIndex,
             scale = scale,
-            fixedHeight = WolfLayout.SavedCardHeight * scale
+            fixedHeight = WolfLayout.SavedCardHeight * scale,
+            borderColor = WolfColors.GlassBorder
         ) {
             WolfIconButton(
                 onClick = onRemoveClick,
