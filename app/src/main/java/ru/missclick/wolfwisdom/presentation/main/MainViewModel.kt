@@ -55,6 +55,7 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
             MainAction.SupportClick,
             MainAction.NavigateToContacts,
             MainAction.NavigateToAbout,
+            MainAction.NavigateToSettings,
             MainAction.ShareClick,
             MainAction.WidgetClick -> Unit
             MainAction.BackPressed -> viewModelScope.launch {

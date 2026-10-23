@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,12 +40,13 @@ private const val JumpReturnMillis = 300
 
 /** Visual guidance for the quote feed's swipe gesture. */
 @Composable
-fun SwipeUpHint(modifier: Modifier = Modifier) {
+fun SwipeUpHint(modifier: Modifier = Modifier, isVisible: Boolean = true) {
     val arrowOffset = remember { Animatable(0f) }
     val jumpHeight = with(LocalDensity.current) { 6.dp.toPx() }
 
-    LaunchedEffect(jumpHeight) {
+    LaunchedEffect(jumpHeight, isVisible) {
         arrowOffset.snapTo(0f)
+        if (!isVisible) return@LaunchedEffect
         delay(JumpIntervalMillis.milliseconds)
         while (isActive) {
             arrowOffset.animateTo(
@@ -60,7 +62,10 @@ fun SwipeUpHint(modifier: Modifier = Modifier) {
     }
 
     Column(
-        modifier = modifier.semantics(mergeDescendants = true) {},
+        modifier = modifier
+            .graphicsLayer { alpha = if (isVisible) 1f else 0f }
+            .then(if (isVisible) Modifier.semantics(mergeDescendants = true) {}
+                else Modifier.clearAndSetSemantics {}),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {

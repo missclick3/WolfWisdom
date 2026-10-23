@@ -7,6 +7,7 @@ sealed interface MainAction {
     data object SupportClick : MainAction
     data object NavigateToContacts : MainAction
     data object NavigateToAbout : MainAction
+    data object NavigateToSettings : MainAction
     data object ShareClick : MainAction
     data object WidgetClick : MainAction
     data object ToggleOptions : MainAction

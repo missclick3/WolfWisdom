@@ -18,10 +18,14 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,6 +44,7 @@ import ru.missclick.wolfwisdom.presentation.components.QuoteSwipeState
 import ru.missclick.wolfwisdom.presentation.components.quoteSwipeGestures
 import ru.missclick.wolfwisdom.presentation.components.rememberQuoteSwipeState
 import ru.missclick.wolfwisdom.presentation.components.SwipeUpHint
+import ru.missclick.wolfwisdom.presentation.components.WolfNavigationDrawer
 import ru.missclick.wolfwisdom.presentation.components.WolfHeader
 import ru.missclick.wolfwisdom.presentation.components.WolfMenuAction
 import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
@@ -62,7 +67,8 @@ fun MainRoot(
     onNavigateToAchievements: () -> Unit = {},
     onSupportClick: () -> Unit = {},
     onNavigateToContacts: () -> Unit = {},
-    onNavigateToAbout: () -> Unit = {}
+    onNavigateToAbout: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -101,6 +107,7 @@ fun MainRoot(
                 MainAction.SupportClick -> onSupportClick()
                 MainAction.NavigateToContacts -> onNavigateToContacts()
                 MainAction.NavigateToAbout -> onNavigateToAbout()
+                MainAction.NavigateToSettings -> onNavigateToSettings()
                 MainAction.ShareClick -> onShareClick(state.quote)
                 MainAction.WidgetClick -> onWidgetClick()
                 else -> viewModel.onAction(action)
@@ -118,6 +125,10 @@ fun MainScreen(
 ) {
     val swipeState = rememberQuoteSwipeState()
     val deviceConfiguration = currentDeviceConfiguration()
+    var headerBrandTopInWindowPx by remember { mutableStateOf<Float?>(null) }
+    val onBrandPositioned: (LayoutCoordinates) -> Unit = {
+        headerBrandTopInWindowPx = it.positionInWindow().y
+    }
     BackHandler(enabled = !state.isOptionsVisible) {
         onAction(MainAction.BackPressed)
     }
@@ -133,6 +144,7 @@ fun MainScreen(
                     deviceConfiguration = deviceConfiguration,
                     swipeState = swipeState,
                     onAction = onAction,
+                    onBrandPositioned = onBrandPositioned,
                     modifier = Modifier.fillMaxSize().padding(innerPadding)
                 )
             } else {
@@ -151,11 +163,9 @@ fun MainScreen(
                 ) {
                     WolfHeader(
                         horizontalPadding = WolfSpacing.Space20,
-                        optionsAlignment = Alignment.CenterEnd,
                         isOptionsVisible = state.isOptionsVisible,
-                        onOptionsClick = { onAction(MainAction.ToggleOptions) },
-                        onOptionsDismissRequest = { onAction(MainAction.DismissOptions) },
-                        onMenuItemClick = { onAction(it.toMainAction()) }
+                        onBrandPositioned = onBrandPositioned,
+                        onOptionsClick = { onAction(MainAction.ToggleOptions) }
                     )
                     Column(
                         modifier = Modifier
@@ -185,6 +195,7 @@ fun MainScreen(
                         }
                     }
                     SwipeUpHint(
+                        isVisible = !state.isOptionsVisible,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(
@@ -196,6 +207,12 @@ fun MainScreen(
                 }
             }
         }
+        WolfNavigationDrawer(
+            expanded = state.isOptionsVisible,
+            brandTopInWindowPx = headerBrandTopInWindowPx,
+            onDismissRequest = { onAction(MainAction.DismissOptions) },
+            onItemClick = { onAction(it.toMainAction()) }
+        )
     }
 }
 
@@ -205,6 +222,7 @@ private fun AdaptiveMainContent(
     deviceConfiguration: DeviceConfiguration,
     swipeState: QuoteSwipeState,
     onAction: (MainAction) -> Unit,
+    onBrandPositioned: (LayoutCoordinates) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val isPhoneLandscape = deviceConfiguration == DeviceConfiguration.MOBILE_LANDSCAPE
@@ -238,9 +256,8 @@ private fun AdaptiveMainContent(
             horizontalPadding = if (isPhoneLandscape) WolfSpacing.Space16 else WolfSpacing.Space24,
             endPadding = actionEndPadding,
             isOptionsVisible = state.isOptionsVisible,
-            onOptionsClick = { onAction(MainAction.ToggleOptions) },
-            onOptionsDismissRequest = { onAction(MainAction.DismissOptions) },
-            onMenuItemClick = { onAction(it.toMainAction()) }
+            onBrandPositioned = onBrandPositioned,
+            onOptionsClick = { onAction(MainAction.ToggleOptions) }
         )
         if (state.quote.isNotEmpty()) {
             // Reserve matching space on both sides so the card stays centered on the screen.
@@ -298,6 +315,7 @@ private fun AdaptiveMainContent(
             }
         }
         SwipeUpHint(
+            isVisible = !state.isOptionsVisible,
             modifier = Modifier.align(Alignment.BottomCenter).padding(
                 horizontal = WolfSpacing.Space20,
                 vertical = if (isPhoneLandscape) WolfSpacing.Space4 else WolfSpacing.Space24
@@ -312,6 +330,7 @@ private fun WolfMenuAction.toMainAction(): MainAction = when (this) {
     WolfMenuAction.SUPPORT -> MainAction.SupportClick
     WolfMenuAction.CONTACTS -> MainAction.NavigateToContacts
     WolfMenuAction.ABOUT -> MainAction.NavigateToAbout
+    WolfMenuAction.SETTINGS -> MainAction.NavigateToSettings
 }
 
 @Preview(name = "Phone portrait", widthDp = 390, heightDp = 844, locale = "ru")

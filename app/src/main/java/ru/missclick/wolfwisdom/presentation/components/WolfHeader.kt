@@ -1,7 +1,6 @@
 package ru.missclick.wolfwisdom.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +11,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -29,20 +32,31 @@ fun WolfHeader(
     modifier: Modifier = Modifier,
     isOptionsVisible: Boolean = false,
     onOptionsClick: () -> Unit = {},
-    onOptionsDismissRequest: () -> Unit = {},
-    onMenuItemClick: (WolfMenuAction) -> Unit = {},
     compact: Boolean = false,
     horizontalPadding: Dp = Space16,
     endPadding: Dp = horizontalPadding,
-    optionsAlignment: Alignment = Alignment.Center
+    onBrandPositioned: (LayoutCoordinates) -> Unit = {}
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
+            // Keep the quote in place while hiding the entire main-screen header.
+            .graphicsLayer { alpha = if (isOptionsVisible) 0f else 1f }
+            .then(if (isOptionsVisible) Modifier.clearAndSetSemantics {} else Modifier)
             .padding(start = horizontalPadding, end = endPadding, top = Space16, bottom = Space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        WolfLogoBrand()
+        WolfIconButton(
+            onClick = onOptionsClick,
+            enabled = !isOptionsVisible,
+            size = 44.dp,
+            containerColor = WolfColors.SavedGlass,
+            contentDescription = stringResource(R.string.more_options)
+        ) {
+            WolfMenuToggleIcon(isExpanded = isOptionsVisible)
+        }
+        Spacer(Modifier.width(Space16))
+        WolfLogoBrand(modifier = Modifier.onGloballyPositioned(onBrandPositioned))
         Spacer(Modifier.width(Space12))
         Column(
             modifier = Modifier
@@ -68,24 +82,5 @@ fun WolfHeader(
             )
         }
         Spacer(Modifier.width(Space12))
-        Box(
-            modifier = Modifier.width(QuoteActionWidth),
-            contentAlignment = optionsAlignment
-        ) {
-            WolfIconButton(
-                onClick = onOptionsClick,
-                size = 44.dp,
-                contentDescription = stringResource(
-                    if (isOptionsVisible) R.string.close_options else R.string.more_options
-                )
-            ) {
-                WolfMenuToggleIcon(isExpanded = isOptionsVisible)
-            }
-            WolfOverflowMenu(
-                expanded = isOptionsVisible,
-                onDismissRequest = onOptionsDismissRequest,
-                onItemClick = onMenuItemClick
-            )
-        }
     }
 }

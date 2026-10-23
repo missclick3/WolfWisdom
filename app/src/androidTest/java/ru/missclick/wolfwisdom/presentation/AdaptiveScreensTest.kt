@@ -28,11 +28,13 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.espresso.Espresso.pressBack
 import java.io.File
 import java.util.Locale
 import org.junit.Assert.assertEquals
@@ -90,6 +92,55 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
             assertEquals(1, saves)
             assertEquals(1, shares)
         }
+    }
+
+    @Test
+    fun mainDrawerDismissesAndDispatchesEveryDestinationAfterClosing() {
+        var expanded by mutableStateOf(false)
+        val destinations = mutableListOf<MainAction>()
+        compose.setContent {
+            ReferenceWindow {
+                MainScreen(
+                    state = MainState(quote = quotes.first().quote, isOptionsVisible = expanded),
+                    onAction = {
+                        when (it) {
+                            MainAction.ToggleOptions -> expanded = !expanded
+                            MainAction.DismissOptions -> expanded = false
+                            else -> {
+                                assertTrue("Navigation must wait for the drawer to close", !expanded)
+                                destinations += it
+                            }
+                        }
+                    }
+                )
+            }
+        }
+        fun openDrawer() {
+            compose.onNodeWithContentDescription(referenceResources.getString(R.string.more_options)).performClick()
+            compose.onNodeWithTag("navigation_drawer").assertExists()
+        }
+        openDrawer()
+        val bitmap = compose.onNodeWithTag("navigation_drawer").captureToImage().asAndroidBitmap()
+        val directory = File(context.cacheDir, "layout-qa").apply { mkdirs() }
+        File(directory, "drawer-$width-$height.png").outputStream().use {
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
+        pressBack()
+        compose.onNodeWithTag("navigation_drawer").assertDoesNotExist()
+        val expected = listOf(
+            R.string.saved to MainAction.NavigateToSaved,
+            R.string.achievements to MainAction.NavigateToAchievements,
+            R.string.donate to MainAction.SupportClick,
+            R.string.contacts to MainAction.NavigateToContacts,
+            R.string.about_app to MainAction.NavigateToAbout,
+            R.string.settings to MainAction.NavigateToSettings
+        )
+        expected.forEach { (label, _) ->
+            openDrawer()
+            compose.onNodeWithText(referenceResources.getString(label)).performScrollTo().performClick()
+            compose.onNodeWithTag("navigation_drawer").assertDoesNotExist()
+        }
+        compose.runOnIdle { assertEquals(expected.map { it.second }, destinations) }
     }
 
     @Test
