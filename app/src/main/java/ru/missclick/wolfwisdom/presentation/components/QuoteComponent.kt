@@ -42,7 +42,7 @@ fun QuoteComponent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(WolfColors.Glass, RoundedCornerShape(WolfRadii.Medium))
+            .background(WolfColors.SavedGlass, RoundedCornerShape(WolfRadii.Medium))
             .heightIn(min = minHeight)
             .padding(
                 horizontal = if (showActions) WolfSpacing.Space16 else WolfSpacing.Space20,
