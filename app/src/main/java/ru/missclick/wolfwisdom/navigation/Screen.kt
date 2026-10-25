@@ -11,4 +11,7 @@ sealed interface Screen {
 
     @Serializable
     data object Settings : Screen
+
+    @Serializable
+    data object Contacts : Screen
 }

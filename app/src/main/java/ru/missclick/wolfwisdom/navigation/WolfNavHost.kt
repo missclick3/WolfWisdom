@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ru.missclick.wolfwisdom.BuildConfig
+import ru.missclick.wolfwisdom.presentation.contacts.ContactsScreen
 import ru.missclick.wolfwisdom.presentation.main.MainRoot
 import ru.missclick.wolfwisdom.presentation.saved.SavedRoot
 import ru.missclick.wolfwisdom.presentation.settings.SettingsScreen
@@ -39,6 +40,11 @@ fun WolfNavHost(
                         navController.navigate(Screen.Settings) {
                             launchSingleTop = true
                         }
+                    },
+                    onNavigateToContacts = {
+                        navController.navigate(Screen.Contacts) {
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -50,6 +56,9 @@ fun WolfNavHost(
             }
             composable<Screen.Settings> {
                 SettingsScreen(onBackClick = { navController.popBackStack() })
+            }
+            composable<Screen.Contacts> {
+                ContactsScreen(onBackClick = { navController.popBackStack() })
             }
         }
     }

@@ -52,6 +52,7 @@ import ru.missclick.wolfwisdom.presentation.saved.SavedAction
 import ru.missclick.wolfwisdom.presentation.saved.SavedScreen
 import ru.missclick.wolfwisdom.presentation.saved.SavedState
 import ru.missclick.wolfwisdom.presentation.settings.SettingsScreen
+import ru.missclick.wolfwisdom.presentation.contacts.ContactsScreen
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
 @RunWith(Parameterized::class)
@@ -221,10 +222,44 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
             .fetchSemanticsNode().boundsInRoot
         val vibration = compose.onNodeWithText(referenceResources.getString(R.string.settings_vibration))
             .fetchSemanticsNode().boundsInRoot
-        assertTrue("Cards must stay within the window", sound.left >= 0 && sound.right <= width)
+        val screen = compose.onNodeWithTag("screen").fetchSemanticsNode().boundsInRoot
+        assertTrue("Cards must stay within the window", sound.left >= screen.left && sound.right <= screen.right)
         assertTrue("Cards must form a vertical column", vibration.top > sound.bottom)
-        assertTrue("Both cards must be visible", vibration.bottom <= height)
+        assertTrue("Both cards must be visible", vibration.bottom <= screen.bottom)
         screenshot("settings")
+        compose.onNodeWithContentDescription(referenceResources.getString(R.string.navigate_back)).performClick()
+        compose.runOnIdle { assertEquals(1, backClicks) }
+    }
+
+    @Test
+    fun contactsUseTheDesignedGridAndKeepLinksInactiveInEveryLayout() {
+        var backClicks = 0
+        compose.setContent {
+            ReferenceWindow { ContactsScreen(onBackClick = { backClicks++ }) }
+        }
+        val screen = compose.onNodeWithTag("screen").fetchSemanticsNode().boundsInRoot
+        val cards = listOf(
+            R.string.contacts_boosty, R.string.contacts_channel,
+            R.string.contacts_telegram, R.string.contacts_email
+        ).map { label ->
+            compose.onNodeWithText(referenceResources.getString(label)).fetchSemanticsNode().also {
+                assertTrue("Contact cards must not have click handlers", !it.config.contains(SemanticsActions.OnClick))
+                assertTrue("Contact cards must remain visible",
+                    it.boundsInRoot.top >= screen.top && it.boundsInRoot.bottom <= screen.bottom)
+            }.boundsInRoot
+        }
+        if (width > height) {
+            assertEquals(cards[0].top, cards[1].top, 1f)
+            assertTrue(cards[1].left > cards[0].right)
+            assertEquals(cards[0].left, cards[2].left, 1f)
+            assertTrue(cards[2].top > cards[0].bottom)
+        } else {
+            cards.zipWithNext().forEach { (first, second) ->
+                assertEquals(first.left, second.left, 1f)
+                assertTrue(second.top > first.bottom)
+            }
+        }
+        screenshot("contacts")
         compose.onNodeWithContentDescription(referenceResources.getString(R.string.navigate_back)).performClick()
         compose.runOnIdle { assertEquals(1, backClicks) }
     }
