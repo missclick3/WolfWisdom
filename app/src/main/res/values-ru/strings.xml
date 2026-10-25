@@ -33,4 +33,8 @@
     <string name="saved_remove_error">Не удалось удалить цитату. Попробуй ещё раз.</string>
     <string name="quote_share_error">Не удалось поделиться цитатой. Попробуй ещё раз.</string>
     <string name="settings">Настройки</string>
+    <string name="settings_sound">Звуковые эффекты</string>
+    <string name="settings_sound_description">Звуки при перелистывании, лайках и других действиях.</string>
+    <string name="settings_vibration">Виброотклик</string>
+    <string name="settings_vibration_description">Лёгкая вибрация при действиях в приложении.</string>
 </resources>

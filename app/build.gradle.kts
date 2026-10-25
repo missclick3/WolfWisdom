@@ -1,9 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
 }
+
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val supportLink = localProperties.getProperty("SUPPORT_LINK")
+    ?.takeIf { it.isNotBlank() }
+    ?: error("Set SUPPORT_LINK in local.properties")
 
 android {
     namespace = "ru.missclick.wolfwisdom"
@@ -17,6 +26,12 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField(
+            "String",
+            "SUPPORT_LINK",
+            "\"${supportLink.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -34,6 +49,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     sourceSets.getByName("androidTest").assets.directories.add("$projectDir/schemas")

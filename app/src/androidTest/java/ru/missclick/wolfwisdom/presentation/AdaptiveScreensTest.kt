@@ -51,6 +51,7 @@ import ru.missclick.wolfwisdom.presentation.main.MainState
 import ru.missclick.wolfwisdom.presentation.saved.SavedAction
 import ru.missclick.wolfwisdom.presentation.saved.SavedScreen
 import ru.missclick.wolfwisdom.presentation.saved.SavedState
+import ru.missclick.wolfwisdom.presentation.settings.SettingsScreen
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
 @RunWith(Parameterized::class)
@@ -206,6 +207,26 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
         compose.onAllNodesWithContentDescription(referenceResources.getString(R.string.remove_quote_from_saved))
             .onFirst().performClick()
         compose.runOnIdle { assertEquals(1L, removedId) }
+    }
+
+    @Test
+    fun settingsContentAndBackRemainAccessibleInEveryLayout() {
+        var backClicks = 0
+        compose.setContent {
+            ReferenceWindow { SettingsScreen(onBackClick = { backClicks++ }) }
+        }
+        compose.onNodeWithText(referenceResources.getString(R.string.settings_sound)).assertExists()
+        compose.onNodeWithText(referenceResources.getString(R.string.settings_vibration)).assertExists()
+        val sound = compose.onNodeWithText(referenceResources.getString(R.string.settings_sound))
+            .fetchSemanticsNode().boundsInRoot
+        val vibration = compose.onNodeWithText(referenceResources.getString(R.string.settings_vibration))
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue("Cards must stay within the window", sound.left >= 0 && sound.right <= width)
+        assertTrue("Cards must form a vertical column", vibration.top > sound.bottom)
+        assertTrue("Both cards must be visible", vibration.bottom <= height)
+        screenshot("settings")
+        compose.onNodeWithContentDescription(referenceResources.getString(R.string.navigate_back)).performClick()
+        compose.runOnIdle { assertEquals(1, backClicks) }
     }
 
     @Composable

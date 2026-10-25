@@ -8,4 +8,7 @@ sealed interface Screen {
 
     @Serializable
     data object Saved : Screen
+
+    @Serializable
+    data object Settings : Screen
 }
