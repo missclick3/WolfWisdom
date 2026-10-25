@@ -52,7 +52,9 @@ import ru.missclick.wolfwisdom.presentation.saved.SavedAction
 import ru.missclick.wolfwisdom.presentation.saved.SavedScreen
 import ru.missclick.wolfwisdom.presentation.saved.SavedState
 import ru.missclick.wolfwisdom.presentation.settings.SettingsScreen
+import ru.missclick.wolfwisdom.presentation.settings.SettingsAction
 import ru.missclick.wolfwisdom.presentation.contacts.ContactsScreen
+import ru.missclick.wolfwisdom.presentation.contacts.ContactsAction
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
 @RunWith(Parameterized::class)
@@ -214,7 +216,9 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
     fun settingsContentAndBackRemainAccessibleInEveryLayout() {
         var backClicks = 0
         compose.setContent {
-            ReferenceWindow { SettingsScreen(onBackClick = { backClicks++ }) }
+            ReferenceWindow {
+                SettingsScreen(onAction = { if (it == SettingsAction.BackPressed) backClicks++ })
+            }
         }
         compose.onNodeWithText(referenceResources.getString(R.string.settings_sound)).assertExists()
         compose.onNodeWithText(referenceResources.getString(R.string.settings_vibration)).assertExists()
@@ -235,7 +239,9 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
     fun contactsUseTheDesignedGridAndKeepLinksInactiveInEveryLayout() {
         var backClicks = 0
         compose.setContent {
-            ReferenceWindow { ContactsScreen(onBackClick = { backClicks++ }) }
+            ReferenceWindow {
+                ContactsScreen(onAction = { if (it == ContactsAction.BackPressed) backClicks++ })
+            }
         }
         val screen = compose.onNodeWithTag("screen").fetchSemanticsNode().boundsInRoot
         val cards = listOf(

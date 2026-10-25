@@ -1,5 +1,6 @@
 package ru.missclick.wolfwisdom.presentation.contacts
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
@@ -38,9 +39,21 @@ private enum class ContactCard(
     EMAIL(R.string.contacts_email, R.string.contacts_email_address, R.drawable.ic_contacts_mail)
 }
 
+@Composable
+fun ContactsRoot(onBackClick: () -> Unit = {}) {
+    ContactsScreen(
+        onAction = { action ->
+            when (action) {
+                ContactsAction.BackPressed -> onBackClick()
+            }
+        }
+    )
+}
+
 /** Presentation only. Contact destinations will be supplied when the links are ready. */
 @Composable
-fun ContactsScreen(onBackClick: () -> Unit = {}) {
+fun ContactsScreen(onAction: (ContactsAction) -> Unit) {
+    BackHandler { onAction(ContactsAction.BackPressed) }
     val device = currentDeviceConfiguration()
     val landscape = device == DeviceConfiguration.MOBILE_LANDSCAPE ||
         device == DeviceConfiguration.TABLET_LANDSCAPE
@@ -58,7 +71,11 @@ fun ContactsScreen(onBackClick: () -> Unit = {}) {
         DeviceConfiguration.TABLET_PORTRAIT -> 132.dp
         DeviceConfiguration.TABLET_LANDSCAPE -> 168.dp
     }
-    WolfServiceScreen(stringResource(R.string.contacts), onBackClick, device) { backdrop ->
+    WolfServiceScreen(
+        title = stringResource(R.string.contacts),
+        onBackClick = { onAction(ContactsAction.BackPressed) },
+        device = device
+    ) { backdrop ->
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState())
                 .padding(horizontal = WolfSpacing.Space16)
@@ -125,5 +142,5 @@ private fun ContactCardContent(
 @Preview(name = "Contacts · Tablet landscape", widthDp = 1112, heightDp = 834, locale = "ru")
 @Composable
 private fun ContactsPreview() {
-    WolfWisdomTheme { ContactsScreen() }
+    WolfWisdomTheme { ContactsScreen(onAction = {}) }
 }

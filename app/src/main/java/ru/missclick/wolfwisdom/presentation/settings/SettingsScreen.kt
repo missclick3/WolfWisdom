@@ -1,5 +1,6 @@
 package ru.missclick.wolfwisdom.presentation.settings
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -27,9 +28,21 @@ import ru.missclick.wolfwisdom.presentation.util.DeviceConfiguration
 import ru.missclick.wolfwisdom.presentation.util.currentDeviceConfiguration
 import ru.missclick.wolfwisdom.ui.theme.*
 
+@Composable
+fun SettingsRoot(onBackClick: () -> Unit = {}) {
+    SettingsScreen(
+        onAction = { action ->
+            when (action) {
+                SettingsAction.BackPressed -> onBackClick()
+            }
+        }
+    )
+}
+
 /** Presentation only: both controls show the enabled state from the design. */
 @Composable
-fun SettingsScreen(onBackClick: () -> Unit = {}) {
+fun SettingsScreen(onAction: (SettingsAction) -> Unit) {
+    BackHandler { onAction(SettingsAction.BackPressed) }
     val device = currentDeviceConfiguration()
     val tablet = !device.isMobile
     val columnWidth = when (device) {
@@ -43,7 +56,11 @@ fun SettingsScreen(onBackClick: () -> Unit = {}) {
         DeviceConfiguration.TABLET_PORTRAIT -> 132.dp
         DeviceConfiguration.TABLET_LANDSCAPE -> 148.dp
     }
-    WolfServiceScreen(stringResource(R.string.settings), onBackClick, device) { backdrop ->
+    WolfServiceScreen(
+        title = stringResource(R.string.settings),
+        onBackClick = { onAction(SettingsAction.BackPressed) },
+        device = device
+    ) { backdrop ->
         // The body scrolls independently, keeping Back accessible on short windows.
         Column(
             Modifier.fillMaxSize()
@@ -115,5 +132,5 @@ private fun SettingsCard(
 @Preview(name = "Settings · Tablet landscape", widthDp = 1112, heightDp = 834, locale = "ru")
 @Composable
 private fun SettingsPreview() {
-    WolfWisdomTheme { SettingsScreen() }
+    WolfWisdomTheme { SettingsScreen(onAction = {}) }
 }
