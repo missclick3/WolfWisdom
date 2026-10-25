@@ -3,6 +3,7 @@ package ru.missclick.wolfwisdom.presentation.main
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,9 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,6 +58,7 @@ import ru.missclick.wolfwisdom.presentation.components.showWolfSnackbar
 import ru.missclick.wolfwisdom.presentation.util.DeviceConfiguration
 import ru.missclick.wolfwisdom.presentation.util.currentDeviceConfiguration
 import ru.missclick.wolfwisdom.ui.theme.WolfSpacing
+import ru.missclick.wolfwisdom.ui.theme.WolfColors
 import ru.missclick.wolfwisdom.ui.theme.WolfTypography
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
@@ -195,7 +201,7 @@ fun MainScreen(
                         }
                     }
                     SwipeUpHint(
-                        isVisible = !state.isOptionsVisible,
+                        isVisible = state.quote.isNotEmpty() && !state.isOptionsVisible,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(
@@ -205,6 +211,18 @@ fun MainScreen(
                             )
                     )
                 }
+            }
+        }
+        if (state.quote.isEmpty()) {
+            val loadingDescription = stringResource(R.string.loading_quote)
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(28.dp).semantics {
+                        contentDescription = loadingDescription
+                    },
+                    color = WolfColors.Accent,
+                    strokeWidth = 2.dp
+                )
             }
         }
         WolfNavigationDrawer(
@@ -315,7 +333,7 @@ private fun AdaptiveMainContent(
             }
         }
         SwipeUpHint(
-            isVisible = !state.isOptionsVisible,
+            isVisible = state.quote.isNotEmpty() && !state.isOptionsVisible,
             modifier = Modifier.align(Alignment.BottomCenter).padding(
                 horizontal = WolfSpacing.Space20,
                 vertical = if (isPhoneLandscape) WolfSpacing.Space4 else WolfSpacing.Space24

@@ -43,4 +43,5 @@
     <string name="contacts_news_description">Новости, обновления и поддержка проекта</string>
     <string name="contacts_message_description">Для связи и предложений</string>
     <string name="contacts_email_address" translatable="false">avarlamova.dev@gmail.com</string>
+    <string name="loading_quote">Загружаем цитату</string>
 </resources>
