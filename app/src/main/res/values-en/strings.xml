@@ -43,4 +43,10 @@
     <string name="contacts_news_description">News, updates, and support for the project</string>
     <string name="contacts_message_description">Get in touch with questions and suggestions</string>
     <string name="loading_quote">Loading quote</string>
+    <string name="error_brand_title">Wolf\'s Wisdom</string>
+    <string name="error_load_label">COULD NOT LOAD</string>
+    <string name="error_title">Something went wrong</string>
+    <string name="error_title_compact">Something\nwent wrong</string>
+    <string name="error_description">Could not load the data.\nPlease try again.</string>
+    <string name="error_retry">Try again</string>
 </resources>

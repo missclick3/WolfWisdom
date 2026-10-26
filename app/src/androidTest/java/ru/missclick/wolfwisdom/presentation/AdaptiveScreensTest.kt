@@ -1,8 +1,15 @@
 package ru.missclick.wolfwisdom.presentation
 
 import android.content.res.Configuration
+import androidx.activity.ComponentActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -13,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -20,8 +28,9 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -45,6 +54,9 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.domain.model.Quote
+import ru.missclick.wolfwisdom.presentation.error.ErrorAction
+import ru.missclick.wolfwisdom.presentation.error.ErrorScreen
+import ru.missclick.wolfwisdom.presentation.error.ErrorState
 import ru.missclick.wolfwisdom.presentation.main.MainAction
 import ru.missclick.wolfwisdom.presentation.main.MainScreen
 import ru.missclick.wolfwisdom.presentation.main.MainState
@@ -59,7 +71,7 @@ import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
 @RunWith(Parameterized::class)
 class AdaptiveScreensTest(private val width: Int, private val height: Int) {
-    @get:Rule val compose = createComposeRule()
+    @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val referenceResources = context.createConfigurationContext(
         Configuration(context.resources.configuration).apply { setLocale(Locale.forLanguageTag("ru")) }
@@ -268,6 +280,45 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
         screenshot("contacts")
         compose.onNodeWithContentDescription(referenceResources.getString(R.string.navigate_back)).performClick()
         compose.runOnIdle { assertEquals(1, backClicks) }
+    }
+
+    @Test
+    fun errorScreenRetryRemainsVisibleAndDisablesWhileRetrying() {
+        compose.activity.runOnUiThread {
+            compose.activity.setTurnScreenOn(true)
+            compose.activity.setShowWhenLocked(true)
+            compose.activity.window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        var retries = 0
+        var retrying by mutableStateOf(false)
+        compose.setContent {
+            ReferenceWindow {
+                // Replace the physical device's pixel insets with reference-window insets.
+                Box(Modifier.fillMaxSize().background(Color(0xFF061019))
+                    .consumeWindowInsets(WindowInsets.safeDrawing)
+                    .padding(top = 24.dp, bottom = 34.dp)) {
+                    ErrorScreen(
+                        state = ErrorState(isRetrying = retrying),
+                        onAction = {
+                            if (it == ErrorAction.Retry) {
+                                retries++
+                                retrying = true
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        val title = if (width < 600 && width <= height) R.string.error_title_compact else R.string.error_title
+        compose.onNodeWithText(referenceResources.getString(title)).assertExists()
+        val button = compose.onNodeWithText(referenceResources.getString(R.string.error_retry))
+        val bounds = button.fetchSemanticsNode().boundsInRoot
+        val screen = compose.onNodeWithTag("screen").fetchSemanticsNode().boundsInRoot
+        assertTrue("Retry must remain visible", bounds.top >= screen.top && bounds.bottom <= screen.bottom)
+        screenshot("error")
+        button.performClick()
+        button.assertIsNotEnabled()
+        compose.runOnIdle { assertEquals(1, retries) }
     }
 
     @Composable

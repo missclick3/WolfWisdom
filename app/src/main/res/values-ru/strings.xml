@@ -43,4 +43,10 @@
     <string name="contacts_news_description">Новости, обновления и поддержка проекта</string>
     <string name="contacts_message_description">Для связи и предложений</string>
     <string name="loading_quote">Загружаем цитату</string>
+    <string name="error_brand_title">Волчья мудрость</string>
+    <string name="error_load_label">НЕ УДАЛОСЬ ЗАГРУЗИТЬ</string>
+    <string name="error_title">Что-то пошло не так</string>
+    <string name="error_title_compact">Что-то пошло\nне так</string>
+    <string name="error_description">Не удалось загрузить данные.\nПопробуйте ещё раз.</string>
+    <string name="error_retry">Попробовать снова</string>
 </resources>
