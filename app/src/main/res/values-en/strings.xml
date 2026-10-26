@@ -30,8 +30,8 @@
     <string name="open_saved_search">Open search</string>
     <string name="close_saved_search">Close search</string>
     <string name="saved_load_error">Could not load saved quotes</string>
-    <string name="saved_remove_error">Could not remove the quote. Try again.</string>
-    <string name="quote_share_error">Could not share the quote. Try again.</string>
+    <string name="saved_remove_error">Couldn’t remove the quote</string>
+    <string name="quote_share_error">Couldn’t share the quote</string>
     <string name="settings">Settings</string>
     <string name="settings_sound">Sound effects</string>
     <string name="settings_sound_description">Sounds when swiping, liking, and performing other actions.</string>
@@ -49,4 +49,5 @@
     <string name="error_title_compact">Something\nwent wrong</string>
     <string name="error_description">Could not load the data.\nPlease try again.</string>
     <string name="error_retry">Try again</string>
+    <string name="error_snackbar_detail">Please try again.</string>
 </resources>

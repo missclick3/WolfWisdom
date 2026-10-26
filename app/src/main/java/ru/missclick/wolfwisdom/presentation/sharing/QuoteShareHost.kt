@@ -41,7 +41,7 @@ import kotlinx.coroutines.withContext
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.presentation.components.QuoteLandscapeCard
 import ru.missclick.wolfwisdom.presentation.components.WolfSnackbarHost
-import ru.missclick.wolfwisdom.presentation.components.showWolfSnackbar
+import ru.missclick.wolfwisdom.presentation.components.showWolfErrorSnackbar
 import ru.missclick.wolfwisdom.ui.theme.WolfLayout
 import kotlin.random.Random
 
@@ -61,6 +61,7 @@ internal fun QuoteShareHost(
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val shareError = stringResource(R.string.quote_share_error)
+    val errorDetail = stringResource(R.string.error_snackbar_detail)
     var request by remember { mutableStateOf<QuoteShareRequest?>(null) }
 
     Box(modifier.fillMaxSize()) {
@@ -82,7 +83,7 @@ internal fun QuoteShareHost(
                 } catch (error: Exception) {
                     Log.e("QuoteShare", "Unable to share quote card", error)
                     scope.launch {
-                        snackbar.showWolfSnackbar(shareError)
+                        snackbar.showWolfErrorSnackbar(shareError, detail = errorDetail)
                     }
                 } finally {
                     request = null

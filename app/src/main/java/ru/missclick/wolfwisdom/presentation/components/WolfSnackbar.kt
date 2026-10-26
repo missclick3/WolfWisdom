@@ -35,10 +35,20 @@ import kotlin.time.Duration.Companion.milliseconds
 private data class WolfSnackbarVisuals(
     override val message: String,
     val detail: String?,
+    val isError: Boolean = false,
     override val actionLabel: String? = null,
     override val withDismissAction: Boolean = false,
     override val duration: SnackbarDuration = SnackbarDuration.Indefinite
 ) : SnackbarVisuals
+
+/** Shows an automatically dismissed error using the shared host and accessibility timeout. */
+suspend fun SnackbarHostState.showWolfErrorSnackbar(
+    headline: String,
+    detail: String? = null,
+    duration: SnackbarDuration = SnackbarDuration.Short
+) = showSnackbar(
+    WolfSnackbarVisuals(message = headline, detail = detail, isError = true, duration = duration)
+)
 
 /** Cancelling the caller also removes its snackbar from the host. */
 suspend fun SnackbarHostState.showWolfSnackbar(
@@ -58,11 +68,20 @@ fun WolfSnackbarHost(
     modifier: Modifier = Modifier
 ) {
     SnackbarHost(hostState = hostState, modifier = modifier) { data ->
-        WolfSnackbar(
-            headline = data.visuals.message,
-            detail = (data.visuals as? WolfSnackbarVisuals)?.detail,
-            modifier = Modifier.padding(WolfSpacing.Space16)
-        )
+        val visuals = data.visuals as? WolfSnackbarVisuals
+        if (visuals?.isError == true) {
+            WolfErrorSnackbar(
+                headline = data.visuals.message,
+                detail = visuals.detail,
+                modifier = Modifier.padding(WolfSpacing.Space20)
+            )
+        } else {
+            WolfSnackbar(
+                headline = data.visuals.message,
+                detail = visuals?.detail,
+                modifier = Modifier.padding(WolfSpacing.Space16)
+            )
+        }
     }
 }
 

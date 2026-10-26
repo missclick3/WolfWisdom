@@ -51,7 +51,7 @@ import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.domain.model.Quote
 import ru.missclick.wolfwisdom.presentation.components.WolfSnackbarHost
 import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
-import ru.missclick.wolfwisdom.presentation.components.showWolfSnackbar
+import ru.missclick.wolfwisdom.presentation.components.showWolfErrorSnackbar
 import ru.missclick.wolfwisdom.presentation.saved.components.SavedEmptyState
 import ru.missclick.wolfwisdom.presentation.saved.components.SavedHeader
 import ru.missclick.wolfwisdom.presentation.saved.components.SavedQuoteCard
@@ -78,8 +78,9 @@ fun SavedRoot(
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collectLatest { effect ->
                 when (effect) {
-                    is SavedEffect.ShowError -> snackbarHostState.showWolfSnackbar(
-                        headline = resources.getString(effect.messageRes)
+                    is SavedEffect.ShowError -> snackbarHostState.showWolfErrorSnackbar(
+                        headline = resources.getString(effect.messageRes),
+                        detail = resources.getString(R.string.error_snackbar_detail)
                     )
                 }
             }

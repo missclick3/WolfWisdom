@@ -30,8 +30,8 @@
     <string name="open_saved_search">Открыть поиск</string>
     <string name="close_saved_search">Закрыть поиск</string>
     <string name="saved_load_error">Не удалось загрузить сохранённые цитаты</string>
-    <string name="saved_remove_error">Не удалось удалить цитату. Попробуй ещё раз.</string>
-    <string name="quote_share_error">Не удалось поделиться цитатой. Попробуй ещё раз.</string>
+    <string name="saved_remove_error">Не удалось удалить цитату</string>
+    <string name="quote_share_error">Не удалось поделиться цитатой</string>
     <string name="settings">Настройки</string>
     <string name="settings_sound">Звуковые эффекты</string>
     <string name="settings_sound_description">Звуки при перелистывании, лайках и других действиях.</string>
@@ -49,4 +49,5 @@
     <string name="error_title_compact">Что-то пошло\nне так</string>
     <string name="error_description">Не удалось загрузить данные.\nПопробуйте ещё раз.</string>
     <string name="error_retry">Попробовать снова</string>
+    <string name="error_snackbar_detail">Попробуйте ещё раз.</string>
 </resources>

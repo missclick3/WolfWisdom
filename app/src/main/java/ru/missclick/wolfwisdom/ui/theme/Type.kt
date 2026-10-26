@@ -67,6 +67,8 @@ object WolfTypography {
         fontSize = WolfTypeScale.CaptionSize,
         lineHeight = WolfTypeScale.CaptionLineHeight
     )
+    val ErrorSnackbarHeadline = Body.copy(fontSize = 14.sp, lineHeight = 17.sp)
+    val ErrorSnackbarDetail = Body.copy(fontSize = 13.sp, lineHeight = 16.sp)
 }
 
 // Material roles reuse the foundation styles instead of Roboto defaults.
