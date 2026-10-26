@@ -29,6 +29,7 @@ import ru.missclick.wolfwisdom.presentation.error.LoadErrorHandler
 import ru.missclick.wolfwisdom.presentation.main.MainViewModel
 import ru.missclick.wolfwisdom.presentation.saved.SavedViewModel
 import org.koin.compose.viewmodel.koinViewModel
+import ru.missclick.wolfwisdom.widget.WidgetPin
 
 @Composable
 fun WolfNavHost(
@@ -36,6 +37,7 @@ fun WolfNavHost(
     navController: NavHostController = rememberNavController()
 ) {
     val uriHandler = LocalUriHandler.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     QuoteShareHost(modifier) { shareQuote ->
         NavHost(
             navController = navController,
@@ -46,7 +48,10 @@ fun WolfNavHost(
             popExitTransition = { slideOutHorizontally { it } + fadeOut() }
         ) {
             composable<Screen.Main> { entry ->
+                val mainViewModel = koinViewModel<MainViewModel>()
                 MainRoot(
+                    viewModel = mainViewModel,
+                    onWidgetClick = { WidgetPin.open(context, mainViewModel.state.value.quoteId) },
                     onLoadError = {
                         navController.navigateFrom(entry) {
                             navigate(Screen.Error(LoadErrorSource.MAIN)) { launchSingleTop = true }
@@ -81,6 +86,7 @@ fun WolfNavHost(
                         }
                     },
                     onBackClick = { navController.popBackStackFrom(entry) },
+                    onWidgetClick = { ru.missclick.wolfwisdom.widget.WidgetPin.open(context, it.id) },
                     onShareClick = { quote, scene -> shareQuote(quote.quote, scene) }
                 )
             }

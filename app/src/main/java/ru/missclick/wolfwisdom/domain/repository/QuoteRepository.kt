@@ -8,6 +8,10 @@ import ru.missclick.wolfwisdom.domain.util.Result
 
 /** Local failures are returned as values; coroutine cancellation still propagates. */
 interface QuoteRepository {
+    /** Stable identity lookup; never changes the reading cursor. */
+    suspend fun getQuoteById(quoteId: Long): Result<Quote, DataError.Local> =
+        Result.Failure(DataError.Local.NOT_FOUND)
+
     /** Seeds the database if needed and resumes the persisted position. */
     suspend fun getCurrentQuote(): Result<Quote, DataError.Local>
 

@@ -1,0 +1,26 @@
+<resources>
+    <string name="widget_description">Favorite quote</string>
+    <string name="widget_empty">Save a quote to your favorites</string>
+    <string name="widget_2_label">Favorite quote · 2×2</string>
+    <string name="widget_3_label">Favorite quote · 3×2</string>
+    <string name="widget_4_label">Favorite quote · 4×2</string>
+    <string name="widget_theme_dark">Dark</string>
+    <string name="widget_theme_light">Light</string>
+    <string name="widget_theme_android">Android</string>
+    <string name="widget_quote_empty">This quote is empty</string>
+    <string name="widget_quote_removed">This quote is no longer saved</string>
+    <string name="widget_quote_unavailable">Quote unavailable</string>
+    <string name="widget_open_saved">Open saved quotes</string>
+    <string name="widget_load_error">Could not load saved quotes</string>
+    <string name="widget_create_error">Could not create the widget. Please try again</string>
+    <string name="widget_save_error">Could not save settings</string>
+    <string name="widget_configuration_title">Widget settings</string>
+    <string name="widget_preview">Preview · %1$s</string>
+    <string name="widget_theme_title">Widget theme</string>
+    <string name="widget_retry">Retry</string>
+    <string name="widget_creating">Creating…</string>
+    <string name="widget_create">Create widget</string>
+    <string name="widget_type_sample">Aa</string>
+    <string name="widget_selected">Selected</string>
+    <string name="widget_pin_unavailable">Add the widget from your home screen widget picker</string>
+</resources>

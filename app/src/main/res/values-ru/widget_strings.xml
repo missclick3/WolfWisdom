@@ -1,0 +1,26 @@
+<resources>
+    <string name="widget_description">Любимая цитата</string>
+    <string name="widget_empty">Добавьте цитату в избранное</string>
+    <string name="widget_2_label">Любимая цитата · 2×2</string>
+    <string name="widget_3_label">Любимая цитата · 3×2</string>
+    <string name="widget_4_label">Любимая цитата · 4×2</string>
+    <string name="widget_theme_dark">Тёмная</string>
+    <string name="widget_theme_light">Светлая</string>
+    <string name="widget_theme_android">Android</string>
+    <string name="widget_quote_empty">Цитата пока пуста</string>
+    <string name="widget_quote_removed">Цитата больше не в избранном</string>
+    <string name="widget_quote_unavailable">Цитата недоступна</string>
+    <string name="widget_open_saved">Откройте избранное</string>
+    <string name="widget_load_error">Не удалось загрузить избранное</string>
+    <string name="widget_create_error">Не удалось создать виджет. Попробуйте ещё раз</string>
+    <string name="widget_save_error">Не удалось сохранить настройки</string>
+    <string name="widget_configuration_title">Настройка виджета</string>
+    <string name="widget_preview">Предпросмотр · %1$s</string>
+    <string name="widget_theme_title">Тема виджета</string>
+    <string name="widget_retry">Повторить</string>
+    <string name="widget_creating">Создание…</string>
+    <string name="widget_create">Создать виджет</string>
+    <string name="widget_type_sample">Аа</string>
+    <string name="widget_selected">Выбрано</string>
+    <string name="widget_pin_unavailable">Добавьте виджет через меню виджетов рабочего стола</string>
+</resources>

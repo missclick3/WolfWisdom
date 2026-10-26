@@ -27,6 +27,10 @@ class RoomQuoteRepository(
     private val quotes = database.quoteDao()
     private val navigation = database.quoteNavigationDao()
 
+    override suspend fun getQuoteById(quoteId: Long): Result<Quote, DataError.Local> = localResult {
+        (quotes.getById(quoteId) ?: throw LocalDataException(DataError.Local.NOT_FOUND)).toDomain()
+    }
+
     override suspend fun getCurrentQuote(): Result<Quote, DataError.Local> = localResult {
         database.withTransaction {
             initializeIfNeeded()

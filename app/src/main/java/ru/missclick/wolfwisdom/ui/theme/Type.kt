@@ -10,7 +10,8 @@ import ru.missclick.wolfwisdom.R
 
 val Inter = FontFamily(
     Font(R.font.inter_variable, weight = FontWeight.Normal),
-    Font(R.font.inter_variable, weight = FontWeight.Medium)
+    Font(R.font.inter_variable, weight = FontWeight.Medium),
+    Font(R.font.inter_variable, weight = FontWeight.Bold)
 )
 val Tinos = FontFamily(Font(R.font.tinos_regular, weight = FontWeight.Normal))
 val CormorantGaramond = FontFamily(
