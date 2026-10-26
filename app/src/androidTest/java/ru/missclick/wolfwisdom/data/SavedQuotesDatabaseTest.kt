@@ -19,6 +19,8 @@ import ru.missclick.wolfwisdom.data.local.WolfWisdomDatabase
 import ru.missclick.wolfwisdom.data.local.dto.QuoteDto
 import ru.missclick.wolfwisdom.data.mapper.toDomain
 import ru.missclick.wolfwisdom.data.repository.RoomQuoteRepository
+import ru.missclick.wolfwisdom.domain.util.Result
+import ru.missclick.wolfwisdom.domain.util.DataError
 
 @RunWith(AndroidJUnit4::class)
 class SavedQuotesDatabaseTest {
@@ -126,11 +128,39 @@ class SavedQuotesDatabaseTest {
         val repository = RoomQuoteRepository(db, QuoteSeedSource(context.assets))
         val before = System.currentTimeMillis()
 
-        repository.setSaved(1, true)
+        assertEquals(Result.Success(Unit), repository.setSaved(1, true))
 
-        val savedAt = requireNotNull(repository.observeSavedQuotes().first().single().savedAt)
+        val savedAt = requireNotNull((repository.observeSavedQuotes().first() as Result.Success).data.single().savedAt)
         assertTrue(savedAt in before..System.currentTimeMillis())
-        repository.setSaved(1, false)
+        assertEquals(Result.Success(Unit), repository.setSaved(1, false))
         assertNull(db.quoteDao().getById(1)?.savedAt)
     }
+    @Test
+    fun repository_unknownSaveId_returnsNotFoundWithoutChangingSavedQuotes() = runBlocking {
+        val db = inMemoryDatabase()
+        db.quoteDao().insertAll(listOf(QuoteDto(1, "Saved quote", true, 100L)))
+        val repository = RoomQuoteRepository(db, QuoteSeedSource(context.assets))
+
+        assertEquals(Result.Failure(DataError.Local.NOT_FOUND), repository.setSaved(999, false))
+        assertEquals(
+            Result.Success(listOf(QuoteDto(1, "Saved quote", true, 100L).toDomain())),
+            repository.observeSavedQuotes().first()
+        )
+    }
+
+    @Test
+    fun repository_navigationAndObservation_returnSuccessfulResults() = runBlocking {
+        val db = inMemoryDatabase()
+        db.quoteDao().insertAll(listOf(QuoteDto(1, "Only quote")))
+        val repository = RoomQuoteRepository(db, QuoteSeedSource(context.assets))
+        val expected = Result.Success(QuoteDto(1, "Only quote").toDomain())
+
+        assertEquals(expected, repository.observeCurrentQuote().first())
+        assertEquals(expected, repository.getCurrentQuote())
+        assertEquals(Result.Success(false), repository.hasPreviousQuote())
+        assertEquals(expected, repository.previousQuote())
+        assertEquals(expected, repository.nextQuote())
+        assertEquals(Result.Success(true), repository.hasPreviousQuote())
+    }
+
 }

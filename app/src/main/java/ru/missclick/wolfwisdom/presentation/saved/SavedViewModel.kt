@@ -2,16 +2,16 @@ package ru.missclick.wolfwisdom.presentation.saved
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.domain.repository.QuoteRepository
+import ru.missclick.wolfwisdom.domain.util.onFailure
+import ru.missclick.wolfwisdom.domain.util.onSuccess
 
 class SavedViewModel(private val quoteRepository: QuoteRepository) : ViewModel() {
     private val _state = MutableStateFlow(SavedState())
@@ -21,12 +21,8 @@ class SavedViewModel(private val quoteRepository: QuoteRepository) : ViewModel()
 
     init {
         viewModelScope.launch {
-            quoteRepository.observeSavedQuotes()
-                .catch {
-                    _state.update { it.copy(isLoading = false) }
-                    effectChannel.send(SavedEffect.ShowError(R.string.saved_load_error))
-                }
-                .collect { quotes ->
+            quoteRepository.observeSavedQuotes().collect { result ->
+                result.onSuccess { quotes ->
                     _state.update {
                         it.copy(
                             quotes = quotes,
@@ -35,7 +31,11 @@ class SavedViewModel(private val quoteRepository: QuoteRepository) : ViewModel()
                             searchQuery = if (quotes.isEmpty()) "" else it.searchQuery
                         )
                     }
+                }.onFailure {
+                    _state.update { it.copy(isLoading = false) }
+                    effectChannel.send(SavedEffect.ShowError(R.string.saved_load_error))
                 }
+            }
         }
     }
 
@@ -60,11 +60,9 @@ class SavedViewModel(private val quoteRepository: QuoteRepository) : ViewModel()
         _state.update { it.copy(removingQuoteIds = it.removingQuoteIds + quoteId) }
         viewModelScope.launch {
             try {
-                quoteRepository.setSaved(quoteId, false)
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                effectChannel.send(SavedEffect.ShowError(R.string.saved_remove_error))
+                quoteRepository.setSaved(quoteId, false).onFailure {
+                    effectChannel.send(SavedEffect.ShowError(R.string.saved_remove_error))
+                }
             } finally {
                 _state.update { it.copy(removingQuoteIds = it.removingQuoteIds - quoteId) }
             }

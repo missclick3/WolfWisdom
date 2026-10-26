@@ -38,9 +38,15 @@ consistent. Saves persist when navigating away or restarting the app.
   as a deterministic tie-breaker. Older saves with unknown dates follow dated saves.
 - `setSaved(id, isSaved)` persists the flag and UTC epoch-millisecond save time.
   Repeating a save preserves its timestamp; unsaving clears it, and saving again
-  assigns a new timestamp. An unknown ID throws `IllegalArgumentException`.
+  assigns a new timestamp. An unknown ID returns `Result.Failure(DataError.Local.NOT_FOUND)`.
 
-All one-shot methods suspend. Flows are cold and emit distinct domain models.
+All one-shot methods suspend and return `Result<T, DataError.Local>` (`EmptyResult` for saves).
+Flows are cold and emit distinct `Result<T, DataError.Local>` values. An upstream
+initialization or observation failure emits `Failure` and completes the flow;
+collect again to retry. Cancellation is rethrown, and exceptions from collectors
+are not converted to repository failures. Seed IO and validation failures map to
+`SEED_READ_FAILED` and `INVALID_SEED_DATA`; SQLite failures map to `DATABASE_ERROR`
+(or `DISK_FULL` when storage is full). Other exceptions map to `UNKNOWN`.
 Calling next/previous on an uninitialized feed returns its first random quote.
 
 ## Seed and persistence

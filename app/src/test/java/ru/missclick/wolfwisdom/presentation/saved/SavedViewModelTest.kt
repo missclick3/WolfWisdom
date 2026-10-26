@@ -8,7 +8,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -22,6 +23,9 @@ import org.junit.Test
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.domain.model.Quote
 import ru.missclick.wolfwisdom.domain.repository.QuoteRepository
+import ru.missclick.wolfwisdom.domain.util.DataError
+import ru.missclick.wolfwisdom.domain.util.Result
+import ru.missclick.wolfwisdom.domain.util.EmptyResult
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SavedViewModelTest {
@@ -151,20 +155,22 @@ class SavedViewModelTest {
         var failWrites = false
         var failObservation = false
 
-        override fun observeSavedQuotes(): Flow<List<Quote>> =
-            if (failObservation) flow { error("Read failed") } else saved
+        override fun observeSavedQuotes(): Flow<Result<List<Quote>, DataError.Local>> =
+            if (failObservation) flowOf(Result.Failure(DataError.Local.DATABASE_ERROR))
+            else saved.map { Result.Success(it) }
 
-        override suspend fun setSaved(quoteId: Long, isSaved: Boolean) {
+        override suspend fun setSaved(quoteId: Long, isSaved: Boolean): EmptyResult<DataError.Local> {
             writes += quoteId to isSaved
             writeGate?.await()
-            check(!failWrites) { "Write failed" }
+            if (failWrites) return Result.Failure(DataError.Local.DATABASE_ERROR)
             saved.value = saved.value.filterNot { it.id == quoteId }
+            return Result.Success(Unit)
         }
 
-        override suspend fun getCurrentQuote(): Quote = error("Unused")
-        override suspend fun nextQuote(): Quote = error("Unused")
-        override suspend fun previousQuote(): Quote = error("Unused")
-        override suspend fun hasPreviousQuote(): Boolean = false
-        override fun observeCurrentQuote(): Flow<Quote> = emptyFlow()
+        override suspend fun getCurrentQuote(): Result<Quote, DataError.Local> = error("Unused")
+        override suspend fun nextQuote(): Result<Quote, DataError.Local> = error("Unused")
+        override suspend fun previousQuote(): Result<Quote, DataError.Local> = error("Unused")
+        override suspend fun hasPreviousQuote(): Result<Boolean, DataError.Local> = Result.Success(false)
+        override fun observeCurrentQuote(): Flow<Result<Quote, DataError.Local>> = emptyFlow()
     }
 }

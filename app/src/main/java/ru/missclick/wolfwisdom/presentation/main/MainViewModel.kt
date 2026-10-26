@@ -3,7 +3,6 @@ package ru.missclick.wolfwisdom.presentation.main
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,6 +10,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.missclick.wolfwisdom.domain.repository.QuoteRepository
+import ru.missclick.wolfwisdom.domain.util.Result
+import ru.missclick.wolfwisdom.domain.util.onFailure
+import ru.missclick.wolfwisdom.domain.util.onSuccess
 import ru.missclick.wolfwisdom.presentation.components.QuoteCardTransition
 import ru.missclick.wolfwisdom.presentation.components.QuoteFlipDirection
 
@@ -24,11 +26,18 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
 
     init {
         viewModelScope.launch {
-            quoteRepository.observeCurrentQuote().collect { quote ->
+            quoteRepository.observeCurrentQuote().collect { result ->
+                val quote = when (result) {
+                    is Result.Success -> result.data
+                    is Result.Failure -> {
+                        Log.e("MainViewModel", "Could not observe the current quote: ${result.error}")
+                        return@collect
+                    }
+                }
                 if (_state.value.isNavigating || _state.value.isSavingQuote ||
                     _state.value.quoteTransition != null) return@collect
                 val generation = quoteGeneration
-                val canGoBack = quoteRepository.hasPreviousQuote()
+                val canGoBack = canGoBack()
                 _state.update {
                     // A delayed observation must not replace a newer navigation or save result.
                     if (generation != quoteGeneration || it.isNavigating || it.isSavingQuote ||
@@ -87,13 +96,14 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
         viewModelScope.launch {
             try {
                 quoteRepository.setSaved(quoteId, isSaved)
-                _state.update {
-                    if (it.quoteId == quoteId) it.copy(isQuoteSaved = isSaved) else it
-                }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Exception) {
-                Log.e("MainViewModel", "Could not update the quote's saved state", error)
+                    .onSuccess {
+                        _state.update {
+                            if (it.quoteId == quoteId) it.copy(isQuoteSaved = isSaved) else it
+                        }
+                    }
+                    .onFailure { error ->
+                        Log.e("MainViewModel", "Could not update the quote's saved state: $error")
+                    }
             } finally {
                 _state.update { it.copy(isSavingQuote = false) }
             }
@@ -120,30 +130,39 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
         _state.update { it.copy(isNavigating = true) }
         viewModelScope.launch {
             try {
-                val quote = when (direction) {
+                val result = when (direction) {
                     QuoteFlipDirection.Up -> quoteRepository.nextQuote()
                     QuoteFlipDirection.Down -> quoteRepository.previousQuote()
                 }
-                val canGoBack = quoteRepository.hasPreviousQuote()
-                _state.update {
-                    it.copy(
-                        quoteId = quote.id,
-                        quote = quote.quote,
-                        isQuoteSaved = quote.isSaved,
-                        canGoBack = canGoBack,
-                        isNavigating = false,
-                        quoteTransition = transition
-                    )
+                result.onSuccess { quote ->
+                    val canGoBack = canGoBack()
+                    _state.update {
+                        it.copy(
+                            quoteId = quote.id,
+                            quote = quote.quote,
+                            isQuoteSaved = quote.isSaved,
+                            canGoBack = canGoBack,
+                            isNavigating = false,
+                            quoteTransition = transition
+                        )
+                    }
+                }.onFailure { error ->
+                    Log.e("MainViewModel", "Could not navigate to a quote: $error")
+                    _state.update {
+                        it.copy(quoteTransition = transition.copy(isBoundary = true))
+                    }
                 }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Exception) {
-                Log.e("MainViewModel", "Could not navigate to a quote", error)
-                _state.update {
-                    it.copy(isNavigating = false, quoteTransition = transition.copy(isBoundary = true))
-                }
+            } finally {
+                _state.update { it.copy(isNavigating = false) }
             }
         }
     }
 
+    private suspend fun canGoBack(): Boolean = when (val result = quoteRepository.hasPreviousQuote()) {
+        is Result.Success -> result.data
+        is Result.Failure -> {
+            Log.e("MainViewModel", "Could not read navigation history: ${result.error}")
+            _state.value.canGoBack
+        }
+    }
 }
