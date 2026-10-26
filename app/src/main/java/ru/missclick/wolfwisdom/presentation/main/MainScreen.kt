@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,6 +39,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.presentation.components.FlippingQuoteCard
@@ -52,6 +56,7 @@ import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
 import ru.missclick.wolfwisdom.presentation.components.WolfSnackbarHost
 import ru.missclick.wolfwisdom.presentation.components.WolfLoadingState
 import ru.missclick.wolfwisdom.presentation.components.showWolfSnackbar
+import ru.missclick.wolfwisdom.presentation.components.showWolfErrorSnackbar
 import ru.missclick.wolfwisdom.presentation.util.DeviceConfiguration
 import ru.missclick.wolfwisdom.presentation.error.LoadErrorNavigationEffect
 import ru.missclick.wolfwisdom.presentation.util.currentDeviceConfiguration
@@ -81,8 +86,11 @@ fun MainRoot(
     val activity = LocalActivity.current
     val closeHeadline = stringResource(R.string.back_to_exit_headline)
     val closeDetail = stringResource(R.string.back_to_exit_detail)
+    val errorDetail = stringResource(R.string.error_snackbar_detail)
+    val resources = LocalResources.current
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(viewModel, lifecycleOwner, closeHeadline, closeDetail) {
+    LaunchedEffect(viewModel, lifecycleOwner, closeHeadline, closeDetail, resources, errorDetail) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collectLatest { effect ->
                 when (effect) {
@@ -90,6 +98,10 @@ fun MainRoot(
                         headline = closeHeadline,
                         detail = closeDetail,
                         durationMillis = 2_000L
+                    )
+                    is MainEffect.ShowError -> snackbarHostState.showWolfErrorSnackbar(
+                        headline = resources.getString(effect.messageRes),
+                        detail = errorDetail
                     )
                 }
             }
@@ -101,7 +113,7 @@ fun MainRoot(
         onAction = { action ->
             when (action) {
                 MainAction.BackPressed -> {
-                    if (snackbarHostState.currentSnackbarData != null) {
+                    if (snackbarHostState.currentSnackbarData?.visuals?.message == closeHeadline) {
                         activity?.finish()
                     } else {
                         viewModel.onAction(action)
@@ -109,7 +121,20 @@ fun MainRoot(
                 }
                 MainAction.NavigateToSaved -> onNavigateToSaved()
                 MainAction.NavigateToAchievements -> onNavigateToAchievements()
-                MainAction.SupportClick -> onSupportClick()
+                MainAction.SupportClick -> {
+                    try {
+                        onSupportClick()
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        scope.launch {
+                            snackbarHostState.showWolfErrorSnackbar(
+                                headline = resources.getString(R.string.support_open_error),
+                                detail = errorDetail
+                            )
+                        }
+                    }
+                }
                 MainAction.NavigateToContacts -> onNavigateToContacts()
                 MainAction.NavigateToAbout -> onNavigateToAbout()
                 MainAction.NavigateToSettings -> onNavigateToSettings()

@@ -1,6 +1,5 @@
 package ru.missclick.wolfwisdom.presentation.main
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
@@ -10,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.domain.repository.QuoteRepository
 import ru.missclick.wolfwisdom.domain.util.Result
 import ru.missclick.wolfwisdom.domain.util.onFailure
@@ -125,8 +125,10 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
                             if (it.quoteId == quoteId) it.copy(isQuoteSaved = isSaved) else it
                         }
                     }
-                    .onFailure { error ->
-                        Log.e("MainViewModel", "Could not update the quote's saved state: $error")
+                    .onFailure {
+                        effectChannel.send(MainEffect.ShowError(
+                            if (isSaved) R.string.saved_add_error else R.string.saved_remove_error
+                        ))
                     }
             } finally {
                 _state.update { it.copy(isSavingQuote = false) }

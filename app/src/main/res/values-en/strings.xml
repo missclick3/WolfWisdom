@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="saved_add_error">Could not save the quote</string>
+    <string name="support_open_error">Could not open the support page</string>
     <string name="loading_data">Loading data</string>
     <string name="back_to_exit_headline">Press back again</string>
     <string name="back_to_exit_detail">to exit the app</string>

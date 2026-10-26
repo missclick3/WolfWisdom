@@ -172,6 +172,41 @@ class SavedViewModelTest {
         assertEquals(listOf(quiet), viewModel.state.value.quotes)
         assertTrue(viewModel.state.value.removingQuoteIds.isEmpty())
         assertEquals(SavedEffect.ShowError(R.string.saved_remove_error), viewModel.effects.first())
+        assertEquals(null, viewModel.errorHandler.state.value.error)
+        assertFalse(viewModel.state.value.showLoading)
+    }
+
+    @Test
+    fun removeQuote_failureDuringSearch_preservesSearchAndSavedCollection() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        viewModel.onAction(SavedAction.OpenSearch)
+        viewModel.onAction(SavedAction.SearchQueryChanged(quiet.quote))
+        repository.failWrites = true
+
+        viewModel.onAction(SavedAction.RemoveQuote(quiet.id))
+
+        assertEquals(SavedEffect.ShowError(R.string.saved_remove_error), viewModel.effects.first())
+        assertTrue(viewModel.state.value.isSearchVisible)
+        assertEquals(quiet.quote, viewModel.state.value.searchQuery)
+        assertEquals(listOf(quiet, strength), viewModel.state.value.quotes)
+        assertEquals(listOf(quiet), viewModel.state.value.visibleQuotes)
+        assertEquals(null, viewModel.errorHandler.state.value.error)
+    }
+
+    @Test
+    fun removeQuote_retryAfterFailedWrite_removesQuoteAndResetsBusyState() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        repository.failWrites = true
+        viewModel.onAction(SavedAction.RemoveQuote(quiet.id))
+        assertEquals(SavedEffect.ShowError(R.string.saved_remove_error), viewModel.effects.first())
+        repository.failWrites = false
+
+        viewModel.onAction(SavedAction.RemoveQuote(quiet.id))
+
+        assertEquals(listOf(strength), viewModel.state.value.quotes)
+        assertTrue(viewModel.state.value.removingQuoteIds.isEmpty())
+        assertEquals(listOf(quiet.id to false, quiet.id to false), repository.writes)
+        assertEquals(null, viewModel.errorHandler.state.value.error)
     }
 
     @Test
