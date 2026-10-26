@@ -1,5 +1,9 @@
 package ru.missclick.wolfwisdom.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +39,11 @@ fun WolfNavHost(
     QuoteShareHost(modifier) { shareQuote ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Main
+            startDestination = Screen.Main,
+            enterTransition = { slideInHorizontally { it } + fadeIn() },
+            exitTransition = { slideOutHorizontally { -it } + fadeOut() },
+            popEnterTransition = { slideInHorizontally { -it } + fadeIn() },
+            popExitTransition = { slideOutHorizontally { it } + fadeOut() }
         ) {
             composable<Screen.Main> { entry ->
                 MainRoot(
