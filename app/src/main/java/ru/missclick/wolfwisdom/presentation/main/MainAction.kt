@@ -1,6 +1,7 @@
 package ru.missclick.wolfwisdom.presentation.main
 
 sealed interface MainAction {
+    data object Reload : MainAction
     data object BackPressed : MainAction
     data object NavigateToSaved : MainAction
     data object NavigateToAchievements : MainAction

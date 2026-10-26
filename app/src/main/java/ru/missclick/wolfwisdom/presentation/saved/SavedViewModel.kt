@@ -3,6 +3,7 @@ package ru.missclick.wolfwisdom.presentation.saved
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -12,15 +13,25 @@ import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.domain.repository.QuoteRepository
 import ru.missclick.wolfwisdom.domain.util.onFailure
 import ru.missclick.wolfwisdom.domain.util.onSuccess
+import ru.missclick.wolfwisdom.presentation.error.LoadErrorHandler
 
 class SavedViewModel(private val quoteRepository: QuoteRepository) : ViewModel() {
     private val _state = MutableStateFlow(SavedState())
     val state = _state.asStateFlow()
     private val effectChannel = Channel<SavedEffect>(Channel.BUFFERED)
     val effects = effectChannel.receiveAsFlow()
+    val errorHandler = LoadErrorHandler<SavedAction>()
+    private var observationJob: Job? = null
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch { errorHandler.retryEvents.collect(::onAction) }
+        observeQuotes()
+    }
+
+    private fun observeQuotes() {
+        observationJob?.cancel()
+        _state.update { it.copy(isLoading = true) }
+        observationJob = viewModelScope.launch {
             quoteRepository.observeSavedQuotes().collect { result ->
                 result.onSuccess { quotes ->
                     _state.update {
@@ -31,9 +42,10 @@ class SavedViewModel(private val quoteRepository: QuoteRepository) : ViewModel()
                             searchQuery = if (quotes.isEmpty()) "" else it.searchQuery
                         )
                     }
-                }.onFailure {
+                    errorHandler.onSuccess()
+                }.onFailure { error ->
                     _state.update { it.copy(isLoading = false) }
-                    effectChannel.send(SavedEffect.ShowError(R.string.saved_load_error))
+                    errorHandler.onFailure(error, SavedAction.Reload)
                 }
             }
         }
@@ -41,6 +53,7 @@ class SavedViewModel(private val quoteRepository: QuoteRepository) : ViewModel()
 
     fun onAction(action: SavedAction) {
         when (action) {
+            SavedAction.Reload -> observeQuotes()
             SavedAction.OpenSearch -> _state.update {
                 it.copy(isSearchVisible = it.quotes.isNotEmpty())
             }

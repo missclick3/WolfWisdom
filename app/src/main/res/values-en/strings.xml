@@ -29,7 +29,6 @@
     <string name="navigate_back">Back</string>
     <string name="open_saved_search">Open search</string>
     <string name="close_saved_search">Close search</string>
-    <string name="saved_load_error">Could not load saved quotes</string>
     <string name="saved_remove_error">Couldn’t remove the quote</string>
     <string name="quote_share_error">Couldn’t share the quote</string>
     <string name="settings">Settings</string>

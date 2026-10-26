@@ -56,6 +56,7 @@ import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
 import ru.missclick.wolfwisdom.presentation.components.WolfSnackbarHost
 import ru.missclick.wolfwisdom.presentation.components.showWolfSnackbar
 import ru.missclick.wolfwisdom.presentation.util.DeviceConfiguration
+import ru.missclick.wolfwisdom.presentation.error.LoadErrorNavigationEffect
 import ru.missclick.wolfwisdom.presentation.util.currentDeviceConfiguration
 import ru.missclick.wolfwisdom.ui.theme.WolfSpacing
 import ru.missclick.wolfwisdom.ui.theme.WolfColors
@@ -74,8 +75,10 @@ fun MainRoot(
     onSupportClick: () -> Unit = {},
     onNavigateToContacts: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
-    onNavigateToSettings: () -> Unit = {}
+    onNavigateToSettings: () -> Unit = {},
+    onLoadError: () -> Unit = {}
 ) {
+    LoadErrorNavigationEffect(viewModel.errorHandler, onLoadError)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val lifecycleOwner = LocalLifecycleOwner.current

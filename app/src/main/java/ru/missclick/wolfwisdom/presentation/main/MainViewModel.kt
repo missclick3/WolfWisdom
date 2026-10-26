@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -15,6 +16,7 @@ import ru.missclick.wolfwisdom.domain.util.onFailure
 import ru.missclick.wolfwisdom.domain.util.onSuccess
 import ru.missclick.wolfwisdom.presentation.components.QuoteCardTransition
 import ru.missclick.wolfwisdom.presentation.components.QuoteFlipDirection
+import ru.missclick.wolfwisdom.presentation.error.LoadErrorHandler
 
 class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() {
 
@@ -23,21 +25,29 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
     private val effectChannel = Channel<MainEffect>(Channel.BUFFERED)
     val effects = effectChannel.receiveAsFlow()
     private var quoteGeneration = 0L
+    val errorHandler = LoadErrorHandler<MainAction>()
+    private var observationJob: Job? = null
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch { errorHandler.retryEvents.collect(::onAction) }
+        observeQuotes()
+    }
+
+    private fun observeQuotes() {
+        observationJob?.cancel()
+        observationJob = viewModelScope.launch {
             quoteRepository.observeCurrentQuote().collect { result ->
                 val quote = when (result) {
                     is Result.Success -> result.data
                     is Result.Failure -> {
-                        Log.e("MainViewModel", "Could not observe the current quote: ${result.error}")
+                        errorHandler.onFailure(result.error, MainAction.Reload)
                         return@collect
                     }
                 }
                 if (_state.value.isNavigating || _state.value.isSavingQuote ||
                     _state.value.quoteTransition != null) return@collect
                 val generation = quoteGeneration
-                val canGoBack = canGoBack()
+                val canGoBack = canGoBack() ?: return@collect
                 _state.update {
                     // A delayed observation must not replace a newer navigation or save result.
                     if (generation != quoteGeneration || it.isNavigating || it.isSavingQuote ||
@@ -52,12 +62,22 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
                         )
                     }
                 }
+                val current = _state.value
+                if (generation == quoteGeneration && !current.isNavigating &&
+                    !current.isSavingQuote && current.quoteTransition == null) {
+                    errorHandler.onSuccess()
+                }
             }
         }
     }
 
     fun onAction(action: MainAction) {
         when (action) {
+            MainAction.Reload -> {
+                ++quoteGeneration
+                _state.update { it.copy(quoteTransition = null) }
+                observeQuotes()
+            }
             // These actions are handled by MainRoot.
             MainAction.NavigateToSaved,
             MainAction.NavigateToAchievements,
@@ -135,7 +155,7 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
                     QuoteFlipDirection.Down -> quoteRepository.previousQuote()
                 }
                 result.onSuccess { quote ->
-                    val canGoBack = canGoBack()
+                    val canGoBack = canGoBack() ?: return@onSuccess
                     _state.update {
                         it.copy(
                             quoteId = quote.id,
@@ -146,11 +166,12 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
                             quoteTransition = transition
                         )
                     }
+                    errorHandler.onSuccess()
                 }.onFailure { error ->
-                    Log.e("MainViewModel", "Could not navigate to a quote: $error")
-                    _state.update {
-                        it.copy(quoteTransition = transition.copy(isBoundary = true))
-                    }
+                    errorHandler.onFailure(
+                        error,
+                        if (direction == QuoteFlipDirection.Up) MainAction.SwipeUp else MainAction.SwipeDown
+                    )
                 }
             } finally {
                 _state.update { it.copy(isNavigating = false) }
@@ -158,11 +179,11 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
         }
     }
 
-    private suspend fun canGoBack(): Boolean = when (val result = quoteRepository.hasPreviousQuote()) {
+    private suspend fun canGoBack(): Boolean? = when (val result = quoteRepository.hasPreviousQuote()) {
         is Result.Success -> result.data
         is Result.Failure -> {
-            Log.e("MainViewModel", "Could not read navigation history: ${result.error}")
-            _state.value.canGoBack
+            errorHandler.onFailure(result.error, MainAction.Reload)
+            null
         }
     }
 }

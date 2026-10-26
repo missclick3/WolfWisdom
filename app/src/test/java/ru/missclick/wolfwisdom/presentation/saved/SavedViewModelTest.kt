@@ -145,7 +145,36 @@ class SavedViewModelTest {
         val viewModel = createViewModel()
 
         assertFalse(viewModel.state.value.isLoading)
-        assertEquals(SavedEffect.ShowError(R.string.saved_load_error), viewModel.effects.first())
+        assertEquals(DataError.Local.DATABASE_ERROR, viewModel.errorHandler.state.value.error)
+    }
+
+    @Test
+    fun retry_failedObservation_resubscribesAndUpdatesCollection() = runTest(dispatcher) {
+        repository.failObservation = true
+        val viewModel = createViewModel()
+        repository.failObservation = false
+
+        viewModel.errorHandler.retry()
+
+        assertEquals(listOf(quiet, strength), viewModel.state.value.quotes)
+        assertEquals(null, viewModel.errorHandler.state.value.error)
+        assertEquals(2, repository.observationCount)
+        repository.saved.value = listOf(strength)
+        assertEquals(listOf(strength), viewModel.state.value.quotes)
+    }
+
+    @Test
+    fun retry_repositoryStillFails_keepsErrorAndAllowsAnotherAttempt() = runTest(dispatcher) {
+        repository.failObservation = true
+        val viewModel = createViewModel()
+
+        viewModel.errorHandler.retry()
+
+        assertEquals(DataError.Local.DATABASE_ERROR, viewModel.errorHandler.state.value.error)
+        assertFalse(viewModel.errorHandler.state.value.isRetrying)
+        repository.failObservation = false
+        viewModel.errorHandler.retry()
+        assertEquals(null, viewModel.errorHandler.state.value.error)
     }
 
     private class FakeQuoteRepository : QuoteRepository {
@@ -154,10 +183,13 @@ class SavedViewModelTest {
         var writeGate: CompletableDeferred<Unit>? = null
         var failWrites = false
         var failObservation = false
+        var observationCount = 0
 
-        override fun observeSavedQuotes(): Flow<Result<List<Quote>, DataError.Local>> =
-            if (failObservation) flowOf(Result.Failure(DataError.Local.DATABASE_ERROR))
+        override fun observeSavedQuotes(): Flow<Result<List<Quote>, DataError.Local>> {
+            observationCount++
+            return if (failObservation) flowOf(Result.Failure(DataError.Local.DATABASE_ERROR))
             else saved.map { Result.Success(it) }
+        }
 
         override suspend fun setSaved(quoteId: Long, isSaved: Boolean): EmptyResult<DataError.Local> {
             writes += quoteId to isSaved

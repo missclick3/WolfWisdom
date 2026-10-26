@@ -29,7 +29,6 @@
     <string name="navigate_back">Назад</string>
     <string name="open_saved_search">Открыть поиск</string>
     <string name="close_saved_search">Закрыть поиск</string>
-    <string name="saved_load_error">Не удалось загрузить сохранённые цитаты</string>
     <string name="saved_remove_error">Не удалось удалить цитату</string>
     <string name="quote_share_error">Не удалось поделиться цитатой</string>
     <string name="settings">Настройки</string>

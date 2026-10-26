@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.domain.model.Quote
+import ru.missclick.wolfwisdom.presentation.error.LoadErrorNavigationEffect
 import ru.missclick.wolfwisdom.presentation.components.WolfSnackbarHost
 import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
 import ru.missclick.wolfwisdom.presentation.components.showWolfErrorSnackbar
@@ -66,8 +67,10 @@ fun SavedRoot(
     viewModel: SavedViewModel = koinViewModel(),
     onBackClick: () -> Unit = {},
     onShareClick: (Quote, Int) -> Unit = { _, _ -> },
-    onWidgetClick: (Quote) -> Unit = {}
+    onWidgetClick: (Quote) -> Unit = {},
+    onLoadError: () -> Unit = {}
 ) {
+    LoadErrorNavigationEffect(viewModel.errorHandler, onLoadError)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val resources = LocalResources.current
     val keyboard = LocalSoftwareKeyboardController.current
