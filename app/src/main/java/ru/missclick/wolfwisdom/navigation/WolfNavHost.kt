@@ -37,46 +37,50 @@ fun WolfNavHost(
             navController = navController,
             startDestination = Screen.Main
         ) {
-            composable<Screen.Main> {
+            composable<Screen.Main> { entry ->
                 MainRoot(
                     onLoadError = {
-                        navController.navigate(Screen.Error(LoadErrorSource.MAIN)) { launchSingleTop = true }
+                        navController.navigateFrom(entry) {
+                            navigate(Screen.Error(LoadErrorSource.MAIN)) { launchSingleTop = true }
+                        }
                     },
                     onShareClick = { shareQuote(it, null) },
                     onSupportClick = {
                         uriHandler.openUri(BuildConfig.SUPPORT_LINK)
                     },
                     onNavigateToSaved = {
-                        navController.navigate(Screen.Saved) {
-                            launchSingleTop = true
+                        navController.navigateFrom(entry) {
+                            navigate(Screen.Saved) { launchSingleTop = true }
                         }
                     },
                     onNavigateToSettings = {
-                        navController.navigate(Screen.Settings) {
-                            launchSingleTop = true
+                        navController.navigateFrom(entry) {
+                            navigate(Screen.Settings) { launchSingleTop = true }
                         }
                     },
                     onNavigateToContacts = {
-                        navController.navigate(Screen.Contacts) {
-                            launchSingleTop = true
+                        navController.navigateFrom(entry) {
+                            navigate(Screen.Contacts) { launchSingleTop = true }
                         }
                     }
                 )
             }
-            composable<Screen.Saved> {
+            composable<Screen.Saved> { entry ->
                 SavedRoot(
                     onLoadError = {
-                        navController.navigate(Screen.Error(LoadErrorSource.SAVED)) { launchSingleTop = true }
+                        navController.navigateFrom(entry) {
+                            navigate(Screen.Error(LoadErrorSource.SAVED)) { launchSingleTop = true }
+                        }
                     },
-                    onBackClick = { navController.popBackStack() },
+                    onBackClick = { navController.popBackStackFrom(entry) },
                     onShareClick = { quote, scene -> shareQuote(quote.quote, scene) }
                 )
             }
-            composable<Screen.Settings> {
-                SettingsRoot(onBackClick = { navController.popBackStack() })
+            composable<Screen.Settings> { entry ->
+                SettingsRoot(onBackClick = { navController.popBackStackFrom(entry) })
             }
-            composable<Screen.Contacts> {
-                ContactsRoot(onBackClick = { navController.popBackStack() })
+            composable<Screen.Contacts> { entry ->
+                ContactsRoot(onBackClick = { navController.popBackStackFrom(entry) })
             }
             composable<Screen.Error> { entry ->
                 val source = entry.toRoute<Screen.Error>().source
@@ -92,13 +96,15 @@ fun WolfNavHost(
                 }
                 val error by handler.state.collectAsStateWithLifecycle()
                 LaunchedEffect(error.error) {
-                    if (error.error == null) navController.popBackStack()
+                    if (error.error == null) navController.popBackStackFrom(entry)
                 }
                 val activity = LocalActivity.current
                 BackHandler {
-                    when (source) {
-                        LoadErrorSource.MAIN -> activity?.finish()
-                        LoadErrorSource.SAVED -> navController.popBackStack<Screen.Saved>(inclusive = true)
+                    navController.navigateFrom(entry) {
+                        when (source) {
+                            LoadErrorSource.MAIN -> activity?.finish()
+                            LoadErrorSource.SAVED -> popBackStack<Screen.Saved>(inclusive = true)
+                        }
                     }
                 }
                 ErrorRoot(onRetry = handler::retry)
