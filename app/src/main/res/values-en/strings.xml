@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="loading_data">Loading data</string>
     <string name="back_to_exit_headline">Press back again</string>
     <string name="back_to_exit_detail">to exit the app</string>
     <string name="next_quote">Next quote</string>

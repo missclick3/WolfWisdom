@@ -13,4 +13,8 @@ data class MainState(
     val quoteTransition: QuoteCardTransition? = null,
     val paramOne: String = "default",
     val paramTwo: List<String> = emptyList(),
-)
+    val isLoading: Boolean = quote.isEmpty(),
+    val hasLoadError: Boolean = false
+) {
+    val showLoading: Boolean get() = isLoading || hasLoadError
+}

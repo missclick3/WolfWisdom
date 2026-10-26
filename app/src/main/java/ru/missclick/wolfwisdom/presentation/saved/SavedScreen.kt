@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHostState
@@ -51,6 +50,7 @@ import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.domain.model.Quote
 import ru.missclick.wolfwisdom.presentation.error.LoadErrorNavigationEffect
 import ru.missclick.wolfwisdom.presentation.components.WolfSnackbarHost
+import ru.missclick.wolfwisdom.presentation.components.WolfLoadingState
 import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
 import ru.missclick.wolfwisdom.presentation.components.showWolfErrorSnackbar
 import ru.missclick.wolfwisdom.presentation.saved.components.SavedEmptyState
@@ -184,7 +184,7 @@ fun SavedScreen(
                     },
                     contentKey = { contentState ->
                         when {
-                            contentState.isLoading -> "loading"
+                            contentState.showLoading -> "loading"
                             contentState.visibleQuotes.isEmpty() -> "empty"
                             else -> "quotes"
                         }
@@ -197,10 +197,7 @@ fun SavedScreen(
                     ) { contentState.visibleQuotes }
                     Box(Modifier.fillMaxSize()) {
                         when {
-                            contentState.isLoading -> CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.Center),
-                                color = WolfColors.Accent
-                            )
+                            contentState.showLoading -> WolfLoadingState()
                             visibleQuotes.isEmpty() -> SavedEmptyState(
                                 isSearchResult = contentState.quotes.isNotEmpty(),
                                 modifier = Modifier.align(Alignment.Center).padding(

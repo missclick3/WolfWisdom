@@ -2,11 +2,14 @@ package ru.missclick.wolfwisdom.presentation.saved
 
 import androidx.lifecycle.ViewModelStore
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -47,6 +50,39 @@ class SavedViewModelTest {
     private fun createViewModel(quotes: List<Quote> = listOf(quiet, strength)): SavedViewModel {
         repository.saved.value = quotes
         return SavedViewModel(repository).also { store.put("saved", it) }
+    }
+
+    @Test
+    fun observeSaved_pendingResult_showsLoadingUntilEmptyCollectionIsConfirmed() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        repository.observationGate = gate
+        val viewModel = createViewModel(emptyList())
+
+        assertTrue(viewModel.state.value.isLoading)
+        assertTrue(viewModel.state.value.showLoading)
+        gate.complete(Unit)
+
+        assertFalse(viewModel.state.value.showLoading)
+        assertFalse(viewModel.state.value.hasLoadError)
+        assertTrue(viewModel.state.value.visibleQuotes.isEmpty())
+    }
+
+    @Test
+    fun retry_pendingResult_keepsLoadingUntilCollectionArrives() = runTest(dispatcher) {
+        repository.failObservation = true
+        val viewModel = createViewModel()
+        repository.failObservation = false
+        val gate = CompletableDeferred<Unit>()
+        repository.observationGate = gate
+
+        val retry = async(dispatcher) { viewModel.errorHandler.retry() }
+
+        assertTrue(viewModel.state.value.isLoading)
+        assertTrue(viewModel.state.value.showLoading)
+        gate.complete(Unit)
+        retry.await()
+        assertFalse(viewModel.state.value.showLoading)
+        assertEquals(listOf(quiet, strength), viewModel.state.value.quotes)
     }
 
     @Test
@@ -146,6 +182,8 @@ class SavedViewModelTest {
 
         assertFalse(viewModel.state.value.isLoading)
         assertEquals(DataError.Local.DATABASE_ERROR, viewModel.errorHandler.state.value.error)
+        assertTrue(viewModel.state.value.hasLoadError)
+        assertTrue(viewModel.state.value.showLoading)
     }
 
     @Test
@@ -184,11 +222,16 @@ class SavedViewModelTest {
         var failWrites = false
         var failObservation = false
         var observationCount = 0
+        var observationGate: CompletableDeferred<Unit>? = null
 
         override fun observeSavedQuotes(): Flow<Result<List<Quote>, DataError.Local>> {
             observationCount++
-            return if (failObservation) flowOf(Result.Failure(DataError.Local.DATABASE_ERROR))
+            val results = if (failObservation) flowOf(Result.Failure(DataError.Local.DATABASE_ERROR))
             else saved.map { Result.Success(it) }
+            return flow {
+                observationGate?.await()
+                emitAll(results)
+            }
         }
 
         override suspend fun setSaved(quoteId: Long, isSaved: Boolean): EmptyResult<DataError.Local> {

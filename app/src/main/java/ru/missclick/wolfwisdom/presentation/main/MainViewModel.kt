@@ -35,11 +35,13 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
 
     private fun observeQuotes() {
         observationJob?.cancel()
+        _state.update { it.copy(isLoading = true, hasLoadError = false) }
         observationJob = viewModelScope.launch {
             quoteRepository.observeCurrentQuote().collect { result ->
                 val quote = when (result) {
                     is Result.Success -> result.data
                     is Result.Failure -> {
+                        _state.update { it.copy(isLoading = false, hasLoadError = true) }
                         errorHandler.onFailure(result.error, MainAction.Reload)
                         return@collect
                     }
@@ -58,7 +60,9 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
                             quoteId = quote.id,
                             quote = quote.quote,
                             isQuoteSaved = quote.isSaved,
-                            canGoBack = canGoBack
+                            canGoBack = canGoBack,
+                            isLoading = false,
+                            hasLoadError = false
                         )
                     }
                 }
@@ -108,7 +112,7 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
     private fun toggleQuoteSaved() {
         val current = _state.value
         val quoteId = current.quoteId ?: return
-        if (current.isSavingQuote || current.isNavigating || current.quoteTransition != null) return
+        if (current.showLoading || current.isSavingQuote || current.isNavigating || current.quoteTransition != null) return
 
         val isSaved = !current.isQuoteSaved
         ++quoteGeneration
@@ -132,7 +136,7 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
 
     private fun navigate(direction: QuoteFlipDirection) {
         val current = _state.value
-        if (current.quote.isEmpty() || current.isNavigating || current.isSavingQuote ||
+        if (current.isLoading || current.quote.isEmpty() || current.isNavigating || current.isSavingQuote ||
             current.quoteTransition != null) return
 
         val transition = QuoteCardTransition(
@@ -163,11 +167,14 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
                             isQuoteSaved = quote.isSaved,
                             canGoBack = canGoBack,
                             isNavigating = false,
+                            isLoading = false,
+                            hasLoadError = false,
                             quoteTransition = transition
                         )
                     }
                     errorHandler.onSuccess()
                 }.onFailure { error ->
+                    _state.update { it.copy(isLoading = false, hasLoadError = true) }
                     errorHandler.onFailure(
                         error,
                         if (direction == QuoteFlipDirection.Up) MainAction.SwipeUp else MainAction.SwipeDown
@@ -182,6 +189,7 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
     private suspend fun canGoBack(): Boolean? = when (val result = quoteRepository.hasPreviousQuote()) {
         is Result.Success -> result.data
         is Result.Failure -> {
+            _state.update { it.copy(isLoading = false, hasLoadError = true) }
             errorHandler.onFailure(result.error, MainAction.Reload)
             null
         }

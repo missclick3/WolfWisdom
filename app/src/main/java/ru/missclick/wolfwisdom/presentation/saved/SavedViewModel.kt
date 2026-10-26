@@ -30,7 +30,7 @@ class SavedViewModel(private val quoteRepository: QuoteRepository) : ViewModel()
 
     private fun observeQuotes() {
         observationJob?.cancel()
-        _state.update { it.copy(isLoading = true) }
+        _state.update { it.copy(isLoading = true, hasLoadError = false) }
         observationJob = viewModelScope.launch {
             quoteRepository.observeSavedQuotes().collect { result ->
                 result.onSuccess { quotes ->
@@ -38,13 +38,14 @@ class SavedViewModel(private val quoteRepository: QuoteRepository) : ViewModel()
                         it.copy(
                             quotes = quotes,
                             isLoading = false,
+                            hasLoadError = false,
                             isSearchVisible = it.isSearchVisible && quotes.isNotEmpty(),
                             searchQuery = if (quotes.isEmpty()) "" else it.searchQuery
                         )
                     }
                     errorHandler.onSuccess()
                 }.onFailure { error ->
-                    _state.update { it.copy(isLoading = false) }
+                    _state.update { it.copy(isLoading = false, hasLoadError = true) }
                     errorHandler.onFailure(error, SavedAction.Reload)
                 }
             }

@@ -12,11 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,8 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,12 +50,12 @@ import ru.missclick.wolfwisdom.presentation.components.WolfHeader
 import ru.missclick.wolfwisdom.presentation.components.WolfMenuAction
 import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
 import ru.missclick.wolfwisdom.presentation.components.WolfSnackbarHost
+import ru.missclick.wolfwisdom.presentation.components.WolfLoadingState
 import ru.missclick.wolfwisdom.presentation.components.showWolfSnackbar
 import ru.missclick.wolfwisdom.presentation.util.DeviceConfiguration
 import ru.missclick.wolfwisdom.presentation.error.LoadErrorNavigationEffect
 import ru.missclick.wolfwisdom.presentation.util.currentDeviceConfiguration
 import ru.missclick.wolfwisdom.ui.theme.WolfSpacing
-import ru.missclick.wolfwisdom.ui.theme.WolfColors
 import ru.missclick.wolfwisdom.ui.theme.WolfTypography
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
@@ -163,7 +159,7 @@ fun MainScreen(
                         .padding(innerPadding)
                         .quoteSwipeGestures(
                             state = swipeState,
-                            enabled = state.quote.isNotEmpty() && !state.isNavigating && !state.isSavingQuote &&
+                            enabled = !state.showLoading && state.quote.isNotEmpty() && !state.isNavigating && !state.isSavingQuote &&
                                 state.quoteTransition == null && !state.isOptionsVisible,
                             canGoBack = state.canGoBack,
                             onSwipeUp = { onAction(MainAction.SwipeUp) },
@@ -187,7 +183,7 @@ fun MainScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        if (state.quote.isNotEmpty()) {
+                        if (!state.showLoading && state.quote.isNotEmpty()) {
                             FlippingQuoteCard(
                                 quote = state.quote,
                                 isSaved = state.isQuoteSaved,
@@ -204,7 +200,7 @@ fun MainScreen(
                         }
                     }
                     SwipeUpHint(
-                        isVisible = state.quote.isNotEmpty() && !state.isOptionsVisible,
+                        isVisible = !state.showLoading && state.quote.isNotEmpty() && !state.isOptionsVisible,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(
@@ -216,18 +212,7 @@ fun MainScreen(
                 }
             }
         }
-        if (state.quote.isEmpty()) {
-            val loadingDescription = stringResource(R.string.loading_quote)
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(28.dp).semantics {
-                        contentDescription = loadingDescription
-                    },
-                    color = WolfColors.Accent,
-                    strokeWidth = 2.dp
-                )
-            }
-        }
+        if (state.showLoading) WolfLoadingState()
         WolfNavigationDrawer(
             expanded = state.isOptionsVisible,
             brandTopInWindowPx = headerBrandTopInWindowPx,
@@ -258,13 +243,13 @@ private fun AdaptiveMainContent(
         DeviceConfiguration.TABLET_LANDSCAPE -> 242.dp
         else -> 170.dp
     }
-    val canInteract = state.quote.isNotEmpty() && !state.isNavigating && !state.isSavingQuote &&
+    val canInteract = !state.showLoading && state.quote.isNotEmpty() && !state.isNavigating && !state.isSavingQuote &&
         state.quoteTransition == null && !state.isOptionsVisible && !swipeState.isDragging &&
         !swipeState.isAwaitingNavigation && !swipeState.isSettling
 
     val swipeModifier = Modifier.quoteSwipeGestures(
         state = swipeState,
-        enabled = state.quote.isNotEmpty() && !state.isNavigating && !state.isSavingQuote &&
+        enabled = !state.showLoading && state.quote.isNotEmpty() && !state.isNavigating && !state.isSavingQuote &&
             state.quoteTransition == null && !state.isOptionsVisible,
         canGoBack = state.canGoBack,
         onSwipeUp = { onAction(MainAction.SwipeUp) },
@@ -280,7 +265,7 @@ private fun AdaptiveMainContent(
             onBrandPositioned = onBrandPositioned,
             onOptionsClick = { onAction(MainAction.ToggleOptions) }
         )
-        if (state.quote.isNotEmpty()) {
+        if (!state.showLoading && state.quote.isNotEmpty()) {
             // Reserve matching space on both sides so the card stays centered on the screen.
             // The bounded area keeps long quotes clear of the header and hint.
             Column(
@@ -336,7 +321,7 @@ private fun AdaptiveMainContent(
             }
         }
         SwipeUpHint(
-            isVisible = state.quote.isNotEmpty() && !state.isOptionsVisible,
+            isVisible = !state.showLoading && state.quote.isNotEmpty() && !state.isOptionsVisible,
             modifier = Modifier.align(Alignment.BottomCenter).padding(
                 horizontal = WolfSpacing.Space20,
                 vertical = if (isPhoneLandscape) WolfSpacing.Space4 else WolfSpacing.Space24

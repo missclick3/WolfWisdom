@@ -2,10 +2,14 @@ package ru.missclick.wolfwisdom.presentation.main
 
 import androidx.lifecycle.ViewModelStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -15,6 +19,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import ru.missclick.wolfwisdom.domain.model.Quote
@@ -35,10 +40,39 @@ class MainLoadingErrorTest {
     private fun viewModel() = MainViewModel(repository).also { store.put("main", it) }
 
     @Test
+    fun initialization_pendingResult_showsLoadingUntilQuoteAndHistoryArrive() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        repository.observationGate = gate
+        val model = viewModel()
+
+        assertTrue(model.state.value.isLoading)
+        assertTrue(model.state.value.showLoading)
+        gate.complete(Unit)
+
+        assertFalse(model.state.value.showLoading)
+        assertEquals(1L, model.state.value.quoteId)
+    }
+
+    @Test
+    fun reload_existingQuote_showsLoadingUntilFreshResultArrives() = runTest(dispatcher) {
+        val model = viewModel()
+        val gate = CompletableDeferred<Unit>()
+        repository.observationGate = gate
+
+        model.onAction(MainAction.Reload)
+
+        assertTrue(model.state.value.showLoading)
+        gate.complete(Unit)
+        assertFalse(model.state.value.showLoading)
+    }
+
+    @Test
     fun initialization_failureThenRetry_restartsObservationAndLoadsQuote() = runTest(dispatcher) {
         repository.failObservation = true
         val model = viewModel()
         assertEquals(DataError.Local.DATABASE_ERROR, model.errorHandler.state.value.error)
+        assertTrue(model.state.value.showLoading)
+        assertTrue(model.state.value.hasLoadError)
 
         repository.failObservation = false
         model.errorHandler.retry()
@@ -46,6 +80,7 @@ class MainLoadingErrorTest {
         assertEquals(1L, model.state.value.quoteId)
         assertEquals(null, model.errorHandler.state.value.error)
         assertEquals(2, repository.observations)
+        assertFalse(model.state.value.showLoading)
     }
 
     @Test
@@ -63,6 +98,7 @@ class MainLoadingErrorTest {
         assertEquals(2L, model.state.value.quoteId)
         assertFalse(model.state.value.isNavigating)
         assertEquals(null, model.errorHandler.state.value.error)
+        assertFalse(model.state.value.showLoading)
     }
 
     @Test
@@ -85,10 +121,15 @@ class MainLoadingErrorTest {
         var failHistory = false
         var observations = 0
         var nextCalls = 0
+        var observationGate: CompletableDeferred<Unit>? = null
         override fun observeCurrentQuote(): Flow<Result<Quote, DataError.Local>> {
             observations++
-            return if (failObservation) flowOf(Result.Failure(DataError.Local.DATABASE_ERROR))
+            val results = if (failObservation) flowOf(Result.Failure(DataError.Local.DATABASE_ERROR))
             else current.map { Result.Success(it) }
+            return flow {
+                observationGate?.await()
+                emitAll(results)
+            }
         }
         override suspend fun nextQuote(): Result<Quote, DataError.Local> {
             nextCalls++

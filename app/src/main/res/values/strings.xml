@@ -1,4 +1,5 @@
 <resources>
+    <string name="loading_data">Загружаем данные</string>
     <string name="back_to_exit_headline">Нажмите ещё раз назад,</string>
     <string name="back_to_exit_detail">чтобы выйти из приложения</string>
     <string name="next_quote">Следующая цитата</string>
