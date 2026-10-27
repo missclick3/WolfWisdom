@@ -37,9 +37,9 @@
     <string name="settings">Настройки</string>
     <string name="settings_language">Язык</string>
     <string name="settings_sound">Звуковые эффекты</string>
-    <string name="settings_sound_description">Звуки при перелистывании, лайках и других действиях.</string>
+    <string name="settings_sound_description">Звук при перелистывании карточек с цитатами на главном экране.</string>
     <string name="settings_vibration">Виброотклик</string>
-    <string name="settings_vibration_description">Лёгкая вибрация при действиях в приложении.</string>
+    <string name="settings_vibration_description">Лёгкая вибрация при лайках, отправке цитат и добавлении их на виджеты.</string>
     <string name="contacts_channel">Telegram-канал</string>
     <string name="contacts_telegram">Написать в Telegram</string>
     <string name="contacts_email">Написать на почту</string>

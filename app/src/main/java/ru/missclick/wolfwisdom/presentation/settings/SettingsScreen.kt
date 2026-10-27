@@ -9,21 +9,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.toggleableState
-import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -33,24 +32,36 @@ import ru.missclick.wolfwisdom.presentation.components.WolfGlassCard
 import ru.missclick.wolfwisdom.presentation.components.WolfServiceScreen
 import ru.missclick.wolfwisdom.presentation.util.DeviceConfiguration
 import ru.missclick.wolfwisdom.presentation.util.currentDeviceConfiguration
+import ru.missclick.wolfwisdom.presentation.util.rememberFeedbackPreferences
+import ru.missclick.wolfwisdom.presentation.util.rememberFeedbackSettings
 import ru.missclick.wolfwisdom.ui.theme.*
 
 @Composable
 fun SettingsRoot(onBackClick: () -> Unit = {}) {
+    val preferences = rememberFeedbackPreferences()
+    val settings by rememberFeedbackSettings(preferences)
     SettingsScreen(
+        soundEffectsEnabled = settings.soundEffectsEnabled,
+        vibrationEnabled = settings.vibrationEnabled,
         onAction = { action ->
             when (action) {
                 SettingsAction.BackPressed -> onBackClick()
                 is SettingsAction.LanguageSelected -> {
                     AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(action.language.tag))
                 }
+                is SettingsAction.SoundEffectsChanged -> preferences.setSoundEffectsEnabled(action.enabled)
+                is SettingsAction.VibrationChanged -> preferences.setVibrationEnabled(action.enabled)
             }
         }
     )
 }
 
 @Composable
-fun SettingsScreen(onAction: (SettingsAction) -> Unit) {
+fun SettingsScreen(
+    soundEffectsEnabled: Boolean = true,
+    vibrationEnabled: Boolean = true,
+    onAction: (SettingsAction) -> Unit
+) {
     val language = AppLanguage.fromTag(LocalConfiguration.current.locales[0].language)
     BackHandler { onAction(SettingsAction.BackPressed) }
     val device = currentDeviceConfiguration()
@@ -84,6 +95,8 @@ fun SettingsScreen(onAction: (SettingsAction) -> Unit) {
                 title = stringResource(R.string.settings_sound),
                 description = stringResource(R.string.settings_sound_description),
                 icon = R.drawable.ic_settings_sound,
+                checked = soundEffectsEnabled,
+                onCheckedChange = { onAction(SettingsAction.SoundEffectsChanged(it)) },
                 modifier = Modifier.widthIn(max = columnWidth).fillMaxWidth(),
                 minHeight = if (tablet) 116.dp else 100.dp,
                 backdrop = backdrop
@@ -92,6 +105,8 @@ fun SettingsScreen(onAction: (SettingsAction) -> Unit) {
                 title = stringResource(R.string.settings_vibration),
                 description = stringResource(R.string.settings_vibration_description),
                 icon = R.drawable.ic_settings_vibration,
+                checked = vibrationEnabled,
+                onCheckedChange = { onAction(SettingsAction.VibrationChanged(it)) },
                 modifier = Modifier.widthIn(max = columnWidth).fillMaxWidth(),
                 minHeight = if (tablet) 116.dp else 100.dp,
                 backdrop = backdrop
@@ -160,6 +175,8 @@ private fun SettingsCard(
     title: String,
     description: String,
     @DrawableRes icon: Int,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
     minHeight: Dp,
     backdrop: WolfGlassBackdrop,
     modifier: Modifier = Modifier
@@ -167,6 +184,7 @@ private fun SettingsCard(
     WolfGlassCard(backdrop, modifier.heightIn(min = minHeight)) {
         Row(
             Modifier.fillMaxWidth().heightIn(min = minHeight)
+                .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
                 .padding(horizontal = WolfSpacing.Space20, vertical = WolfSpacing.Space16)
                 .semantics(mergeDescendants = true) {},
             verticalAlignment = Alignment.CenterVertically,
@@ -181,11 +199,8 @@ private fun SettingsCard(
                 Text(description, style = WolfTypography.Caption, color = WolfColors.Secondary)
             }
             Image(
-                painterResource(R.drawable.ic_settings_toggle_on), null,
-                Modifier.size(width = 48.dp, height = 28.dp).semantics {
-                    role = Role.Switch
-                    toggleableState = ToggleableState.On
-                }
+                painterResource(if (checked) R.drawable.ic_settings_toggle_on else R.drawable.ic_settings_toggle_off), null,
+                Modifier.size(width = 48.dp, height = 28.dp)
             )
         }
     }

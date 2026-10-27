@@ -12,24 +12,33 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import ru.missclick.wolfwisdom.R
+import ru.missclick.wolfwisdom.presentation.util.rememberFeedbackPreferences
 
 @Composable
 internal fun rememberQuoteFlipSound(): (Long) -> Unit {
     val context = LocalContext.current.applicationContext
     val isPreview = LocalInspectionMode.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val preferences = rememberFeedbackPreferences()
     val sound = remember(context, isPreview) {
         if (isPreview) null else QuoteFlipSound(context)
     }
 
-    DisposableEffect(sound) {
-        onDispose { sound?.release() }
+    DisposableEffect(sound, preferences) {
+        val unsubscribe = preferences.observe { settings ->
+            if (!settings.soundEffectsEnabled) sound?.stop()
+        }
+        onDispose {
+            unsubscribe()
+            sound?.release()
+        }
     }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { sound?.stop() }
 
-    return remember(sound, lifecycleOwner) {
+    return remember(sound, lifecycleOwner, preferences) {
         { transitionId ->
-            if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            if (preferences.settings.soundEffectsEnabled &&
+                lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
                 sound?.play(transitionId)
             }
         }

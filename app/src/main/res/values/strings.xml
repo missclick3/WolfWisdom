@@ -38,9 +38,9 @@
     <string name="language_english" translatable="false">English</string>
     <string name="language_russian" translatable="false">Русский</string>
     <string name="settings_sound">Sound effects</string>
-    <string name="settings_sound_description">Sounds when swiping, liking, and performing other actions.</string>
+    <string name="settings_sound_description">Sound when flipping quote cards on the main screen.</string>
     <string name="settings_vibration">Haptic feedback</string>
-    <string name="settings_vibration_description">Gentle vibration when using the app.</string>
+    <string name="settings_vibration_description">Gentle vibration when liking, sharing, and adding quotes to widgets.</string>
     <string name="contacts_boosty" translatable="false">Boosty</string>
     <string name="contacts_channel">Telegram channel</string>
     <string name="contacts_telegram">Message on Telegram</string>

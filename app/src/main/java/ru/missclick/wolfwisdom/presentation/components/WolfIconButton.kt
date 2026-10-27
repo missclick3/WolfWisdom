@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.Dp
 import ru.missclick.wolfwisdom.R
+import ru.missclick.wolfwisdom.presentation.util.rememberFeedbackPreferences
 import ru.missclick.wolfwisdom.ui.theme.WolfColors
 import ru.missclick.wolfwisdom.ui.theme.WolfEffects
 import ru.missclick.wolfwisdom.ui.theme.WolfLayout
@@ -61,9 +62,10 @@ fun WolfIconButton(
     content: @Composable () -> Unit
 ) {
     val view = LocalView.current
+    val preferences = rememberFeedbackPreferences()
     Surface(
         onClick = {
-            if (hapticFeedbackEnabled) {
+            if (hapticFeedbackEnabled && preferences.settings.vibrationEnabled) {
                 view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
             }
             onClick()
