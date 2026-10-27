@@ -47,6 +47,7 @@ internal fun SavedQuoteCard(
         ) {
             WolfIconButton(
                 onClick = onRemoveClick,
+                hapticFeedbackEnabled = true,
                 contentDescription = stringResource(R.string.remove_quote_from_saved),
                 modifier = Modifier.align(Alignment.TopEnd)
                     .padding(top = WolfSpacing.Space24 * scale, end = WolfSpacing.Space8 * scale)
@@ -67,6 +68,7 @@ internal fun SavedQuoteCard(
             ) {
                 WolfIconButton(
                     onClick = onWidgetClick,
+                    hapticFeedbackEnabled = true,
                     contentDescription = stringResource(R.string.set_widget),
                     modifier = Modifier.semantics { selected = quote.isOnWidget },
                     size = 40.dp * scale,
@@ -78,6 +80,7 @@ internal fun SavedQuoteCard(
                 }
                 WolfIconButton(
                     onClick = onShareClick,
+                    hapticFeedbackEnabled = true,
                     contentDescription = stringResource(R.string.share),
                     size = 40.dp * scale,
                     iconSize = WolfSpacing.Space24 * scale,

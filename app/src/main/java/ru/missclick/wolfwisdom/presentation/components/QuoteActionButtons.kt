@@ -61,6 +61,7 @@ fun QuoteActionButtons(
     ) {
         WolfIconButton(
             onClick = onSaveClick,
+            hapticFeedbackEnabled = true,
             enabled = enabled,
             contentDescription = stringResource(
                 if (isSaved) R.string.remove_quote_from_saved else R.string.save_quote
@@ -113,6 +114,7 @@ private fun QuoteActionWithLabel(
     ) {
         WolfIconButton(
             onClick = onClick,
+            hapticFeedbackEnabled = true,
             enabled = enabled,
             contentDescription = label,
             modifier = Modifier.semantics { this.selected = selected },

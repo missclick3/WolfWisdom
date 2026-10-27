@@ -1,5 +1,6 @@
 package ru.missclick.wolfwisdom.presentation.components
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +23,7 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -55,10 +57,17 @@ fun WolfIconButton(
     size: Dp = WolfSpacing.Space40,
     containerColor: Color = WolfColors.Glass,
     iconSize: Dp = WolfSpacing.Space24,
+    hapticFeedbackEnabled: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val view = LocalView.current
     Surface(
-        onClick = onClick,
+        onClick = {
+            if (hapticFeedbackEnabled) {
+                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            }
+            onClick()
+        },
         enabled = enabled,
         modifier = modifier
             .minimumInteractiveComponentSize()
