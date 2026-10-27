@@ -72,7 +72,6 @@ fun MainRoot(
     onShareClick: (String) -> Unit = {},
     onWidgetClick: () -> Unit = {},
     onNavigateToSaved: () -> Unit = {},
-    onNavigateToAchievements: () -> Unit = {},
     onSupportClick: () -> Unit = {},
     onNavigateToContacts: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
@@ -120,7 +119,6 @@ fun MainRoot(
                     }
                 }
                 MainAction.NavigateToSaved -> onNavigateToSaved()
-                MainAction.NavigateToAchievements -> onNavigateToAchievements()
                 MainAction.SupportClick -> {
                     try {
                         onSupportClick()
@@ -360,7 +358,6 @@ private fun AdaptiveMainContent(
 
 private fun WolfMenuAction.toMainAction(): MainAction = when (this) {
     WolfMenuAction.SAVED -> MainAction.NavigateToSaved
-    WolfMenuAction.ACHIEVEMENTS -> MainAction.NavigateToAchievements
     WolfMenuAction.SUPPORT -> MainAction.SupportClick
     WolfMenuAction.CONTACTS -> MainAction.NavigateToContacts
     WolfMenuAction.ABOUT -> MainAction.NavigateToAbout

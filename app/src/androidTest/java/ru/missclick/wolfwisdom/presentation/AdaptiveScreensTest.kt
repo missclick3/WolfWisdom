@@ -145,7 +145,6 @@ class AdaptiveScreensTest(private val width: Int, private val height: Int) {
         compose.onNodeWithTag("navigation_drawer").assertDoesNotExist()
         val expected = listOf(
             R.string.saved to MainAction.NavigateToSaved,
-            R.string.achievements to MainAction.NavigateToAchievements,
             R.string.donate to MainAction.SupportClick,
             R.string.contacts to MainAction.NavigateToContacts,
             R.string.about_app to MainAction.NavigateToAbout,

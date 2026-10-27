@@ -51,7 +51,6 @@ import ru.missclick.wolfwisdom.ui.theme.*
 
 enum class WolfMenuAction(@StringRes val labelRes: Int, @DrawableRes internal val iconRes: Int) {
     SAVED(R.string.saved, R.drawable.drawer_heart),
-    ACHIEVEMENTS(R.string.achievements, R.drawable.drawer_achievements),
     SUPPORT(R.string.donate, R.drawable.ic_menu_support),
     CONTACTS(R.string.contacts, R.drawable.ic_menu_contacts),
     ABOUT(R.string.about_app, R.drawable.ic_menu_about),

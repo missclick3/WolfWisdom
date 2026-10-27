@@ -88,7 +88,6 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
             }
             // These actions are handled by MainRoot.
             MainAction.NavigateToSaved,
-            MainAction.NavigateToAchievements,
             MainAction.SupportClick,
             MainAction.NavigateToContacts,
             MainAction.NavigateToAbout,

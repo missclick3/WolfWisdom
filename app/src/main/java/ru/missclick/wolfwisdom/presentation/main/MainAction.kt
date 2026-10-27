@@ -4,7 +4,6 @@ sealed interface MainAction {
     data object Reload : MainAction
     data object BackPressed : MainAction
     data object NavigateToSaved : MainAction
-    data object NavigateToAchievements : MainAction
     data object SupportClick : MainAction
     data object NavigateToContacts : MainAction
     data object NavigateToAbout : MainAction
