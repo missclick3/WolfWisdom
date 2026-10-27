@@ -6,7 +6,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.*
 import android.os.Build
-import android.util.Log
+import ru.missclick.wolfwisdom.logging.AppLog
 import android.util.LruCache
 import android.view.View
 import android.view.WindowManager
@@ -71,7 +71,7 @@ object WidgetRenderer {
     )
 
     fun fallback(context: Context, id: Int, state: WidgetState, quote: WidgetQuote, reason: String): RemoteViews {
-        Log.w(TAG, "id=$id fallback=$reason bitmaps=0")
+        AppLog.w(TAG, "id=$id fallback=$reason bitmaps=0")
         val p = palette(context, state.theme)
         return base(context, id, quote, p).apply {
             setViewVisibility(R.id.widget_text_image, View.GONE)
@@ -112,7 +112,7 @@ object WidgetRenderer {
             val background = backgroundSize?.let { (bw, bh) -> background(context, state.theme, p, bw, bh, fit.extended) }
             val used = text.allocationByteCount.toLong() + (background?.allocationByteCount ?: 0)
             if (used > budget) return fallback(context, id, state, quote, "actual-allocation")
-            Log.d(TAG, "id=$id dp=${size.width}x${size.height} px=${w}x$h text=${text.config}:${text.allocationByteCount} background=${background?.width}x${background?.height}:${background?.config}:${background?.allocationByteCount} bytes=$used budget=$budget cache=${cache.size()}")
+            AppLog.d(TAG, "id=$id dp=${size.width}x${size.height} px=${w}x$h text=${text.config}:${text.allocationByteCount} background=${background?.width}x${background?.height}:${background?.config}:${background?.allocationByteCount} bytes=$used budget=$budget cache=${cache.size()}")
             return base(context, id, quote, p).apply {
                 setViewVisibility(R.id.widget_native, View.GONE)
                 setViewVisibility(R.id.widget_text_image, View.VISIBLE)
@@ -145,7 +145,7 @@ object WidgetRenderer {
         while (bounds.outWidth / (sample * 2) >= w && bounds.outHeight / (sample * 2) >= h) sample *= 2
         val options = BitmapFactory.Options().apply { inSampleSize = sample; inPreferredConfig = Bitmap.Config.RGB_565; inScaled = false }
         val source = requireNotNull(BitmapFactory.decodeResource(context.resources, resource, options)) { "Landscape decode failed" }
-        Log.d(TAG, "decode resource=$resource sample=$sample px=${source.width}x${source.height} config=${source.config} bytes=${source.allocationByteCount}")
+        AppLog.d(TAG, "decode resource=$resource sample=$sample px=${source.width}x${source.height} config=${source.config} bytes=${source.allocationByteCount}")
         // Transformation has a bounded output, never a full-resolution duplicate.
         val output = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)
         try {

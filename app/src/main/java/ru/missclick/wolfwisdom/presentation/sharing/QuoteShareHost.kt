@@ -4,7 +4,7 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.util.Log
+import ru.missclick.wolfwisdom.logging.AppLog
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -81,7 +81,7 @@ internal fun QuoteShareHost(
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
-                    Log.e("QuoteShare", "Unable to share quote card", error)
+                    AppLog.e("QuoteShare", "Unable to share quote card", error)
                     scope.launch {
                         snackbar.showWolfErrorSnackbar(shareError, detail = errorDetail)
                     }

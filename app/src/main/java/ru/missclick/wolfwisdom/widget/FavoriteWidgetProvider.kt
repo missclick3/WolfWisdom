@@ -6,7 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.*
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import ru.missclick.wolfwisdom.logging.AppLog
 import android.util.SizeF
 import android.widget.RemoteViews
 import androidx.room.InvalidationTracker
@@ -129,9 +129,9 @@ object WidgetUpdates {
                     ids(application).forEach { update(application, it) }
                 } catch (cancelled: CancellationException) { throw cancelled
                 } catch (error: java.io.IOException) {
-                    Log.e("FavoriteWidget", "Widget synchronization failed", error)
+                    AppLog.e("FavoriteWidget", "Widget synchronization failed", error)
                 } catch (error: android.database.sqlite.SQLiteException) {
-                    Log.e("FavoriteWidget", "Widget synchronization failed", error)
+                    AppLog.e("FavoriteWidget", "Widget synchronization failed", error)
                 }
             }
         }
@@ -189,7 +189,7 @@ object WidgetUpdates {
         val payload = if (Build.VERSION.SDK_INT >= 31 && views.size > 1) RemoteViews(
             sizes.zip(views).associate { (size, view) -> SizeF(size.width, size.height) to view }
         ) else if (views.size > 1) RemoteViews(views[1], views[0]) else views.single()
-        Log.d("FavoriteWidget", "id=$id variants=${views.size} totalBudget=$budget")
+        AppLog.d("FavoriteWidget", "id=$id variants=${views.size} totalBudget=$budget")
         try {
             manager.updateAppWidget(id, payload) // Full update: never accumulate bitmap actions.
             true
@@ -206,7 +206,7 @@ object WidgetUpdates {
             true
         } catch (error: RuntimeException) {
             // Only the terminal Binder submission boundary; no retry and no quote text in logs.
-            Log.e("FavoriteWidget", "id=$id fallback rejected type=${error.javaClass.simpleName}")
+            AppLog.e("FavoriteWidget", "id=$id fallback rejected type=${error.javaClass.simpleName}")
             false
         }
     }

@@ -1,7 +1,7 @@
 package ru.missclick.wolfwisdom.analytics
 
 import android.app.Application
-import android.util.Log
+import ru.missclick.wolfwisdom.logging.AppLog
 import io.appmetrica.analytics.AppMetrica
 import io.appmetrica.analytics.AppMetricaConfig
 import ru.missclick.wolfwisdom.BuildConfig
@@ -12,7 +12,7 @@ class AppMetricaAnalyticsTracker : AnalyticsTracker {
         try {
             AppMetrica.reportEvent(name, parameters)
         } catch (error: RuntimeException) {
-            Log.w("AppAnalytics", "Unable to queue event: $name", error)
+            AppLog.w("AppAnalytics", "Unable to queue event: $name", error)
         }
     }
 

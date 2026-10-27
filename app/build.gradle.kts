@@ -11,10 +11,8 @@ plugins {
 val localProperties = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
-val metricKey = localProperties.getProperty("METRIC_KEY")
-    ?.takeIf { it.isNotBlank() }
-    ?: error("Set METRIC_KEY in local.properties")
-require(runCatching { UUID.fromString(metricKey) }.isSuccess) { "METRIC_KEY must be a UUID" }
+val metricKey = providers.environmentVariable("METRIC_KEY")
+    .orElse(localProperties.getProperty("METRIC_KEY").orEmpty()).get().trim()
 val supportLink = localProperties.getProperty("SUPPORT_LINK")
     ?.takeIf { it.isNotBlank() }
     ?: error("Set SUPPORT_LINK in local.properties")
@@ -40,7 +38,6 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
-        buildConfigField("String", "METRIC_KEY", "\"$metricKey\"")
 
         buildConfigField(
             "String",
@@ -55,11 +52,18 @@ android {
     }
 
     buildTypes {
+        debug {
+            isDebuggable = true
+            versionNameSuffix = "-debug"
+            optimization { enable = false }
+            buildConfigField("boolean", "LOGGING_ENABLED", "true")
+        }
         release {
-            optimization {
-                enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
-            }
+            isDebuggable = false
+            isJniDebuggable = false
+            optimization { enable = true }
+            buildConfigField("boolean", "LOGGING_ENABLED", "false")
+            buildConfigField("String", "METRIC_KEY", "\"${metricKey.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
         }
     }
     compileOptions {
@@ -73,12 +77,27 @@ android {
     sourceSets.getByName("androidTest").assets.directories.add("$projectDir/schemas")
 }
 
+// Debug builds do not need production telemetry credentials.
+val validateReleaseConfiguration = tasks.register("validateReleaseConfiguration") {
+    group = "verification"
+    description = "Checks the AppMetrica key before building release artifacts."
+    val configuredMetricKey = metricKey
+    doLast {
+        require(runCatching { UUID.fromString(configuredMetricKey) }.isSuccess) {
+            "Set a valid METRIC_KEY in local.properties or the METRIC_KEY environment variable"
+        }
+    }
+}
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(validateReleaseConfiguration)
+}
+
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
-    implementation(libs.appmetrica.analytics)
+    releaseImplementation(libs.appmetrica.analytics)
     implementation(libs.androidx.appcompat)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

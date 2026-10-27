@@ -1,16 +1,25 @@
 # AppMetrica events
 
-`METRIC_KEY` is read from ignored `local.properties` into `BuildConfig.METRIC_KEY`.
-SDK 8.6.0 starts in `WolfWisdomApplication`; Activity sessions and crash reports
-are enabled. Location, advertising identifiers and automatic revenue tracking are
-disabled; the transitive `AD_ID` permission is removed from the app manifest.
-This integration sends statistics after startup; no consent UI has been
-added. Update the privacy policy and store data disclosures before distribution.
+`METRIC_KEY` is read from ignored `local.properties` (or the `METRIC_KEY`
+environment variable on CI) into **release-only** `BuildConfig.METRIC_KEY`.
+Debug builds do not need this key and do not contain AppMetrica SDK.
+
+In debug, `AnalyticsRuntime` does not initialize an SDK. Its
+`LoggingAnalyticsTracker` writes custom events to Logcat under `AppAnalytics`,
+without transmitting them. This also applies to the default debug instrumented
+test APK. In release, SDK 8.6.0 starts in `WolfWisdomApplication`; Activity
+sessions and crash reports are enabled. Location, advertising identifiers and
+automatic revenue tracking are disabled; the transitive `AD_ID` permission is
+removed from the app manifest. Release statistics start after initialization;
+no consent UI has been added. Update the privacy policy and store data
+disclosures before distribution. See [release configuration](release.md).
 
 ## Architecture
 
-- `AnalyticsTracker` is the transport interface; only `AppMetricaAnalyticsTracker`
-  imports the SDK. Koin supplies its implementation to `ProvideAnalytics`.
+- `AnalyticsTracker` is the transport interface. Only the release source set's
+  `AppMetricaAnalyticsTracker` imports the SDK, declared as `releaseImplementation`.
+  Each build type defines `AnalyticsRuntime`; Koin supplies the variant's tracker
+  to `ProvideAnalytics`.
 - `ScreenAnalytics` defines screen visits and Back button clicks.
   `BaseScreenAnalytics` adds the `screen` parameter to every event.
 - Each screen directory contains its own class (`MainAnalytics`,

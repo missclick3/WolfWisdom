@@ -1,0 +1,13 @@
+# Remove Logcat calls, including those in dependencies, from optimized release.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+    public static int w(...);
+    public static int e(...);
+    public static int wtf(...);
+    public static int println(...);
+}
+
+# Keep source/line metadata so release crash reports can be retraced with mapping.txt.
+-keepattributes SourceFile,LineNumberTable
