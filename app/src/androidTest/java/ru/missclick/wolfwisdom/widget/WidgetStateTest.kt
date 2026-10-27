@@ -13,7 +13,7 @@ class WidgetStateTest {
     @Test fun instances_persistIndependentlyAndRestoreWithoutLosingOverlappingIds() {
         val store = WidgetStateStore(context)
         val first = WidgetState(45, WidgetTheme.LIGHT)
-        val second = WidgetState(61, WidgetTheme.ANDROID, allowUnsaved = true)
+        val second = WidgetState(61, WidgetTheme.ANDROID)
         try {
             assertTrue(store.write(90101, first))
             assertTrue(store.write(90102, second))
@@ -30,14 +30,18 @@ class WidgetStateTest {
         } finally { (90101..90103).forEach(store::delete) }
     }
 
-    @Test fun oldState_migratesWithoutAllowingRemovedFavorites() {
+    @Test fun legacyStates_preserveQuoteAndTheme() {
         val prefs = context.getSharedPreferences("favorite_widgets", 0)
         val store = WidgetStateStore(context)
         try {
             prefs.edit().putString("instance.90104", "1|45|LIGHT").commit()
             assertEquals(WidgetState(45, WidgetTheme.LIGHT), store.read(90104))
-            store.write(90104, WidgetState(61, WidgetTheme.ANDROID, allowUnsaved = true))
-            assertEquals(WidgetState(61, WidgetTheme.ANDROID, allowUnsaved = true), WidgetStateStore(context).read(90104))
+            for (allowed in listOf(false, true)) {
+                prefs.edit().putString("instance.90104", "2|45|LIGHT|$allowed").commit()
+                assertEquals(WidgetState(45, WidgetTheme.LIGHT), store.read(90104))
+            }
+            store.write(90104, WidgetState(61, WidgetTheme.ANDROID))
+            assertEquals(WidgetState(61, WidgetTheme.ANDROID), WidgetStateStore(context).read(90104))
         } finally { store.delete(90104) }
     }
 }

@@ -61,6 +61,7 @@ class WidgetConfigurationTest {
 
     private fun intent(id: Int) = Intent(context, WidgetConfigurationActivity::class.java)
         .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+        .putExtra("quote_id", quoteId)
 
     private fun ready(scenario: ActivityScenario<WidgetConfigurationActivity>) {
         compose.waitUntil(15_000) {
@@ -181,15 +182,14 @@ class WidgetConfigurationTest {
         }
     }
 
-    @Test fun currentQuoteFallback_survivesReconfigurationWithoutAddingFavorite(): Unit = runBlocking {
+    @Test fun unsavedQuote_survivesReconfigurationWithoutAddingFavorite(): Unit = runBlocking {
         val id = allocate()
         database.quoteDao().setSaved(quoteId, false, null)
-        WidgetStateStore(context).write(id, WidgetState(quoteId, allowUnsaved = true))
+        WidgetStateStore(context).write(id, WidgetState(quoteId))
         ActivityScenario.launchActivityForResult<WidgetConfigurationActivity>(intent(id)).use { scenario ->
             ready(scenario)
             scenario.onActivity {
                 val draft = ViewModelProvider(it)[WidgetConfigViewModel::class.java].state.value
-                assertTrue(draft.allowUnsaved)
                 assertTrue(draft.quote!!.hasQuote)
             }
             compose.onNodeWithText(context.getString(ru.missclick.wolfwisdom.R.string.widget_theme_light)).performScrollTo().performClick()
@@ -197,14 +197,33 @@ class WidgetConfigurationTest {
             ready(scenario)
             scenario.onActivity {
                 val draft = ViewModelProvider(it)[WidgetConfigViewModel::class.java].state.value
-                assertTrue(draft.allowUnsaved)
                 assertEquals(WidgetTheme.LIGHT, draft.theme)
             }
             compose.onNodeWithText(context.getString(ru.missclick.wolfwisdom.R.string.widget_create)).performScrollTo().performClick()
             compose.waitUntil(15_000) { scenario.state == androidx.lifecycle.Lifecycle.State.DESTROYED }
             assertEquals(Activity.RESULT_OK, scenario.result.resultCode)
         }
-        assertEquals(WidgetState(quoteId, WidgetTheme.LIGHT, allowUnsaved = true), WidgetStateStore(context).read(id))
+        assertEquals(WidgetState(quoteId, WidgetTheme.LIGHT), WidgetStateStore(context).read(id))
         assertFalse(database.quoteDao().getById(quoteId)!!.isSaved)
+    }
+
+    @Test fun pinConfirmation_doesNotSaveQuote(): Unit = runBlocking {
+        database.quoteDao().setSaved(quoteId, false, null)
+        val store = androidx.lifecycle.ViewModelStore()
+        lateinit var model: WidgetConfigViewModel
+        try {
+            instrumentation.runOnMainSync {
+                model = WidgetConfigViewModel(context.applicationContext as android.app.Application,
+                    androidx.lifecycle.SavedStateHandle())
+                store.put("pin-test", model)
+                model.initialize(-1, true, quoteId)
+            }
+            compose.waitUntil(15_000) { !model.state.value.loading }
+            assertTrue(model.state.value.quote!!.hasQuote)
+            instrumentation.runOnMainSync { model.confirm() }
+            compose.waitUntil(15_000) { !model.state.value.submitting }
+            assertFalse(database.quoteDao().getById(quoteId)!!.isSaved)
+            assertNull(database.quoteDao().getById(quoteId)!!.savedAt)
+        } finally { instrumentation.runOnMainSync { store.clear() } }
     }
 }

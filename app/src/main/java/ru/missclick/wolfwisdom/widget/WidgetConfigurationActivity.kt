@@ -43,8 +43,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.koin.core.context.GlobalContext
-import ru.missclick.wolfwisdom.domain.repository.QuoteRepository
 import ru.missclick.wolfwisdom.ui.theme.*
 
 class WidgetConfigurationActivity : ComponentActivity() {
@@ -80,7 +78,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
 data class WidgetConfigUi(
     val id: Int = -1, val pin: Boolean = false, val width: Float = 160f,
     val theme: WidgetTheme = WidgetTheme.DARK, val quote: WidgetQuote? = null,
-    val quoteId: Long? = null, val allowUnsaved: Boolean = false, val loading: Boolean = true, val submitting: Boolean = false,
+    val quoteId: Long? = null, val loading: Boolean = true, val submitting: Boolean = false,
     val error: Int? = null, val complete: Boolean = false
 )
 
@@ -96,8 +94,7 @@ class WidgetConfigViewModel(application: Application, private val saved: SavedSt
             if (_state.value.quote != null) viewModelScope.launch {
                 val draft = _state.value
                 val localizedQuote = withContext(Dispatchers.IO) {
-                    loadWidgetQuote(getApplication(), WidgetState(draft.quoteId, draft.theme,
-                        allowUnsaved = draft.allowUnsaved), allowUnsaved = draft.pin)
+                    loadWidgetQuote(getApplication(), WidgetState(draft.quoteId, draft.theme))
                 }
                 _state.value = _state.value.copy(quote = localizedQuote)
             }
@@ -110,16 +107,14 @@ class WidgetConfigViewModel(application: Application, private val saved: SavedSt
             try {
                 val state = withContext(Dispatchers.IO) {
                     val committed = WidgetStateStore(getApplication()).read(id)
-                    val initial = if (saved.contains("quote")) WidgetState(saved.get<Long>("quote")?.takeIf { it > 0 },
-                        allowUnsaved = saved["allow_unsaved"] ?: false)
+                    val initial = if (saved.contains("quote")) WidgetState(saved.get<Long>("quote")?.takeIf { it > 0 })
                         else committed ?: WidgetStateStore.initial(requestedQuote)
                     initial.copy(theme = saved.get<String>("theme")?.let { name -> WidgetTheme.entries.find { it.name == name } }
                         ?: committed?.theme ?: WidgetTheme.DARK)
                 }
                 saved["quote"] = state.quoteId ?: -1L
-                saved["allow_unsaved"] = state.allowUnsaved
-                _state.value = _state.value.copy(theme = state.theme, quoteId = state.quoteId, allowUnsaved = state.allowUnsaved,
-                    quote = withContext(Dispatchers.IO) { loadWidgetQuote(getApplication(), state, allowUnsaved = pin) }, loading = false)
+                _state.value = _state.value.copy(theme = state.theme, quoteId = state.quoteId,
+                    quote = withContext(Dispatchers.IO) { loadWidgetQuote(getApplication(), state) }, loading = false)
             } catch (cancelled: CancellationException) { throw cancelled
             } catch (_: java.io.IOException) { _state.value = _state.value.copy(loading = false, error = R.string.widget_load_error) }
         }
@@ -145,12 +140,7 @@ class WidgetConfigViewModel(application: Application, private val saved: SavedSt
         viewModelScope.launch {
             try {
                 val context = getApplication<Application>()
-                val state = WidgetState(draft.quoteId, draft.theme, allowUnsaved = draft.allowUnsaved)
-                if (draft.pin && draft.quoteId != null) {
-                    val result = GlobalContext.get().get<QuoteRepository>()
-                        .setSaved(draft.quoteId, true)
-                    if (result is ru.missclick.wolfwisdom.domain.util.Result.Failure) throw java.io.IOException("Cannot save pinned quote")
-                }
+                val state = WidgetState(draft.quoteId, draft.theme)
                 val success = if (draft.pin) WidgetPin.request(context, state) else withContext(Dispatchers.IO) {
                     if (!WidgetStateStore(context).write(draft.id, state)) throw java.io.IOException("Widget commit failed")
                     WidgetUpdates.update(context, draft.id)
@@ -266,7 +256,7 @@ object WidgetPin {
         prefs.all.keys.filter { it.startsWith("time.") && prefs.getLong(it, 0) < System.currentTimeMillis() - 86_400_000L }.forEach {
             editor.remove(it).remove(it.removePrefix("time."))
         }
-        if (!editor.putString(token, "${state.quoteId ?: -1}|${state.theme.name}|${state.allowUnsaved}")
+        if (!editor.putString(token, "${state.quoteId ?: -1}|${state.theme.name}")
                 .putLong("time.$token", System.currentTimeMillis()).commit()) throw java.io.IOException("Pin draft failed")
         val intent = Intent(context, WidgetPinReceiver::class.java).setAction("ru.missclick.wolfwisdom.PIN_WIDGET")
             .setData(android.net.Uri.parse("wolfwisdom://pin/$token"))
@@ -292,8 +282,7 @@ class WidgetPinReceiver : BroadcastReceiver() {
                 val prefs = context.getSharedPreferences("widget_pin_requests", 0)
                 val fields = prefs.getString(token, null)?.split('|') ?: return@launch
                 val theme = WidgetTheme.entries.find { it.name == fields.getOrNull(1) } ?: return@launch
-                val allowUnsaved = fields.getOrNull(2)?.toBooleanStrictOrNull() ?: false
-                if (WidgetStateStore(context).write(id, WidgetState(fields[0].toLongOrNull()?.takeIf { it > 0 }, theme, allowUnsaved))) {
+                if (WidgetStateStore(context).write(id, WidgetState(fields[0].toLongOrNull()?.takeIf { it > 0 }, theme))) {
                     prefs.edit().remove(token).remove("time.$token").commit()
                     WidgetUpdates.update(context, id)
                 }
