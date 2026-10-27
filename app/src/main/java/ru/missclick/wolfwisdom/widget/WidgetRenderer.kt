@@ -136,7 +136,7 @@ object WidgetRenderer {
     internal fun background(context: Context, theme: WidgetTheme, p: WidgetPalette, w: Int, h: Int, extended: Boolean): Bitmap {
         // Android recolors one master; fixed themes retain their supplied artwork.
         val resource = if (theme == WidgetTheme.DARK) R.drawable.widget_landscape_dark else R.drawable.widget_landscape_light
-        val key = "$resource:2:$theme:$w:$h:${context.resources.displayMetrics.densityDpi}:$p:$extended"
+        val key = "$resource:4:$theme:$w:$h:${context.resources.displayMetrics.densityDpi}:$p:$extended"
         cache.get(key)?.let { return it }
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeResource(context.resources, resource, bounds)
@@ -162,7 +162,8 @@ object WidgetRenderer {
             canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), Paint(Paint.DITHER_FLAG).apply {
                 shader = LinearGradient(0f, 0f, w.toFloat(), 0f, intArrayOf(rgb or (220 shl 24), rgb or (90 shl 24), rgb), floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
             })
-            if (extended) canvas.drawColor(rgb or (166 shl 24))
+            // A light 25% tint supports longer text while retaining the landscape.
+            if (extended) canvas.drawColor(rgb or (64 shl 24))
         } finally { source.recycle() }
         if (output.allocationByteCount <= CACHE_BYTES) cache.put(key, output)
         return output
