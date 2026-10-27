@@ -171,8 +171,9 @@ private fun ConfigurationContent(state: WidgetConfigUi, back: () -> Unit, select
                 modifier = Modifier.align(Alignment.CenterHorizontally))
             Spacer(Modifier.height(16.dp))
             BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                val width = minOf(state.width.dp, maxWidth)
-                WidgetPreview(state, width.value)
+                val width = minOf((state.width * 1.5f).dp, maxWidth)
+                val height = width.value * 160f / state.width
+                WidgetPreview(state, width.value, height)
             }
             Spacer(Modifier.height(32.dp))
             Text(stringResource(R.string.widget_theme_title), fontFamily = Tinos, fontWeight = FontWeight.Normal, fontSize = 22.sp)
@@ -221,19 +222,19 @@ private fun ThemeCard(theme: WidgetTheme, state: WidgetConfigUi, select: (Widget
 }
 
 @Composable
-private fun WidgetPreview(state: WidgetConfigUi, width: Float) {
+private fun WidgetPreview(state: WidgetConfigUi, width: Float, height: Float) {
     val context = LocalContext.current
     val quote = state.quote
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val view by produceState<RemoteViews?>(null, quote, state.theme, width, configuration) {
+    val view by produceState<RemoteViews?>(null, quote, state.theme, width, height, configuration) {
         value = if (quote == null) null else withContext(Dispatchers.IO) {
             WidgetRenderer.render(context, state.id, WidgetState(state.quoteId, state.theme), quote,
-                WidgetDimensions(width, 160f), WidgetRenderer.budget(context))
+                WidgetDimensions(width, height), WidgetRenderer.budget(context))
         }
     }
-    if (view == null) Box(Modifier.size(width.dp, 160.dp), contentAlignment = Alignment.Center) {
+    if (view == null) Box(Modifier.size(width.dp, height.dp), contentAlignment = Alignment.Center) {
         if (state.loading || quote != null) CircularProgressIndicator()
-    } else AndroidView(factory = { FrameLayout(it) }, modifier = Modifier.size(width.dp, 160.dp), update = { frame ->
+    } else AndroidView(factory = { FrameLayout(it) }, modifier = Modifier.size(width.dp, height.dp), update = { frame ->
         frame.removeAllViews()
         frame.addView(view!!.apply(context, frame))
     })
