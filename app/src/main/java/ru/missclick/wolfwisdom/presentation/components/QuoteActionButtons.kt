@@ -50,6 +50,7 @@ fun QuoteActionButtons(
     onSaveClick: () -> Unit,
     onShareClick: () -> Unit,
     onWidgetClick: () -> Unit,
+    isOnWidget: Boolean = false,
     enabled: Boolean = true
 ) {
     Column(
@@ -87,7 +88,8 @@ fun QuoteActionButtons(
             enabled = enabled
         )
         QuoteActionWithLabel(
-            iconRes = R.drawable.ic_quote_widget,
+            iconRes = if (isOnWidget) R.drawable.ic_quote_widget_filled else R.drawable.ic_quote_widget,
+            selected = isOnWidget,
             labelRes = R.string.set_widget,
             onClick = onWidgetClick,
             enabled = enabled
@@ -100,7 +102,8 @@ private fun QuoteActionWithLabel(
     @DrawableRes iconRes: Int,
     @StringRes labelRes: Int,
     onClick: () -> Unit,
-    enabled: Boolean
+    enabled: Boolean,
+    selected: Boolean = false
 ) {
     val label = stringResource(labelRes)
     Column(
@@ -112,6 +115,8 @@ private fun QuoteActionWithLabel(
             onClick = onClick,
             enabled = enabled,
             contentDescription = label,
+            modifier = Modifier.semantics { this.selected = selected },
+            containerColor = if (selected) WolfColors.Pressed else WolfColors.Glass,
             size = QuoteActionButtonSize
         ) {
             Icon(painter = painterResource(iconRes), contentDescription = null)

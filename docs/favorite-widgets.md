@@ -111,3 +111,10 @@ Localization verification: English/Russian/default resource parity passed for 76
 Removed automatic saving from pin confirmation and all saved-status checks from widget loading. Launcher placement now selects the current quote independently of favorites. Updated regression tests cover unliking without hiding the quote, stable identity after navigation/favorite changes, unsaved pin confirmation and reconfiguration, and legacy state compatibility. Previous verification results above describe earlier revisions.
 
 Validation: debug and instrumentation APK builds passed, all 59 JVM tests passed, lint passed, and `git diff --check` passed. Updated widget instrumentation tests compiled but were not executed: no device was connected, and emulator startup was blocked by filesystem permissions on its lock files.
+
+
+## Widget membership indicator (2026-10-27)
+
+Added `isOnWidget` to the Room DTO and domain quote with schema migration 2 to 3. The main-screen and saved-quote widget buttons use filled artwork and selected styling while at least one active configured widget displays that quote. Committed state writes, deletion and restoration request reconciliation; startup also reconciles existing bindings against launcher IDs. Rebinding to a different quote uses the same path, preparing for future quote selection. Draft/pin cancellation does not set membership. Multiple instances keep the flag true until the last binding is removed. Likes and saved timestamps remain independent.
+
+Validation: both debug APK builds, all 59 JVM tests, lint, and diff checks passed. Installed the debug and test APKs on the connected phone and passed 12 instrumented tests across WidgetMembershipTest, WidgetDataTest, WidgetStateTest and SavedQuotesDatabaseTest, including upgrades from schema 1 and 2.

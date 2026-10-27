@@ -27,6 +27,7 @@ open class FavoriteWidgetProvider : AppWidgetProvider() {
         WidgetUpdates.scope.launch {
             try {
                 WidgetUpdates.mutex.withLock { ids.forEach { WidgetStateStore(context).delete(it) } }
+                WidgetUpdates.synchronizeQuotes(context)
                 WidgetRenderer.clearCache()
             } finally { pending.finish() }
         }
@@ -69,7 +70,10 @@ open class FavoriteWidgetProvider : AppWidgetProvider() {
     private fun dispatch(context: Context, ids: IntArray) {
         val pending = goAsync()
         WidgetUpdates.scope.launch {
-            try { ids.forEach { WidgetUpdates.update(context.applicationContext, it) } }
+            try {
+                ids.forEach { WidgetUpdates.update(context.applicationContext, it) }
+                WidgetUpdates.synchronizeQuotes(context)
+            }
             finally { pending.finish() }
         }
     }
@@ -88,6 +92,19 @@ object WidgetUpdates {
         AppWidgetManager.getInstance(context).getAppWidgetIds(ComponentName(context, it)).toList()
     }.toIntArray()
 
+    fun changed() { changes.trySend(Unit) }
+
+    /** Host IDs exclude abandoned drafts and stale bindings after backup/launcher changes. */
+    suspend fun synchronizeQuotes(
+        context: Context,
+        widgetIds: IntArray = ids(context),
+        database: WolfWisdomDatabase = GlobalContext.get().get()
+    ) = mutex.withLock {
+        val store = WidgetStateStore(context)
+        val quoteIds = widgetIds.map { store.read(it)?.quoteId }.filterNotNull().distinct()
+        database.quoteDao().synchronizeWidgetQuotes(quoteIds)
+    }
+
     fun initialize(application: Application) {
         GlobalContext.get().get<WolfWisdomDatabase>().invalidationTracker.addObserver(
             object : InvalidationTracker.Observer("quotes") {
@@ -105,7 +122,19 @@ object WidgetUpdates {
             android.app.WallpaperManager.getInstance(application).addOnColorsChangedListener(
                 { _, _ -> changes.trySend(Unit) }, android.os.Handler(android.os.Looper.getMainLooper()))
         }
-        scope.launch { for (ignored in changes) ids(application).forEach { update(application, it) } }
+        scope.launch {
+            for (ignored in changes) {
+                try {
+                    synchronizeQuotes(application)
+                    ids(application).forEach { update(application, it) }
+                } catch (cancelled: CancellationException) { throw cancelled
+                } catch (error: java.io.IOException) {
+                    Log.e("FavoriteWidget", "Widget synchronization failed", error)
+                } catch (error: android.database.sqlite.SQLiteException) {
+                    Log.e("FavoriteWidget", "Widget synchronization failed", error)
+                }
+            }
+        }
         changes.trySend(Unit)
     }
 

@@ -13,5 +13,8 @@ data class QuoteDto(
     val isSaved: Boolean = false,
     /** UTC epoch milliseconds; null when unsaved or the original save time is unknown. */
     @ColumnInfo(defaultValue = "NULL")
-    val savedAt: Long? = null
+    val savedAt: Long? = null,
+    /** True while at least one configured home-screen widget displays this quote. */
+    @ColumnInfo(defaultValue = "0")
+    val isOnWidget: Boolean = false
 )

@@ -68,11 +68,13 @@ internal fun SavedQuoteCard(
                 WolfIconButton(
                     onClick = onWidgetClick,
                     contentDescription = stringResource(R.string.set_widget),
+                    modifier = Modifier.semantics { selected = quote.isOnWidget },
                     size = 40.dp * scale,
                     iconSize = WolfSpacing.Space24 * scale,
-                    containerColor = WolfColors.SavedGlass
+                    containerColor = if (quote.isOnWidget) WolfColors.Pressed else WolfColors.SavedGlass
                 ) {
-                    Icon(painterResource(R.drawable.ic_quote_widget), contentDescription = null)
+                    Icon(painterResource(if (quote.isOnWidget) R.drawable.ic_quote_widget_filled
+                        else R.drawable.ic_quote_widget), contentDescription = null)
                 }
                 WolfIconButton(
                     onClick = onShareClick,

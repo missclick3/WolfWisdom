@@ -66,7 +66,7 @@ Historical save dates remain unknown rather than being fabricated.
 
 ## Reading sequence
 
-The quote DTO has `id`, `quote`, `isSaved`, and `savedAt`. Three separate tables store
+The quote DTO has `id`, `quote`, `isSaved`, `savedAt`, and `isOnWidget`. Three separate tables store
 the append-only reading history, its current cursor, and the IDs generated in
 the active cycle.
 
@@ -85,3 +85,5 @@ or clearing app data resets them. History is intentionally not truncated.
 
 References: [Room asynchronous queries](https://developer.android.com/training/data-storage/room/async-queries),
 [Koin Android startup](https://insert-koin.io/docs/reference/koin-android/start/).
+
+Widget membership uses schema version 3. Migration 2 to 3 adds non-null `isOnWidget` with a false default, preserving quote content, favorites and reading history. Widget lifecycle reconciliation derives this flag from active launcher widget IDs and their committed quote bindings. Multiple widgets can share a quote; deleting or rebinding one only clears membership when no active widget still uses that quote. Reconciliation runs at application startup and after binding changes, repairing stale flags after process death or upgrade. The DAO updates changed rows only to avoid Room invalidation loops. Widget status is independent of `isSaved` and `savedAt`.

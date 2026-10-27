@@ -46,6 +46,9 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
                         return@collect
                     }
                 }
+                _state.update {
+                    if (it.quoteId == quote.id) it.copy(isQuoteOnWidget = quote.isOnWidget) else it
+                }
                 if (_state.value.isNavigating || _state.value.isSavingQuote ||
                     _state.value.quoteTransition != null) return@collect
                 val generation = quoteGeneration
@@ -60,6 +63,7 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
                             quoteId = quote.id,
                             quote = quote.quote,
                             isQuoteSaved = quote.isSaved,
+                            isQuoteOnWidget = quote.isOnWidget,
                             canGoBack = canGoBack,
                             isLoading = false,
                             hasLoadError = false
@@ -146,6 +150,7 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
             direction = direction,
             outgoingQuote = current.quote,
             outgoingIsSaved = current.isQuoteSaved,
+            outgoingIsOnWidget = current.isQuoteOnWidget,
             isBoundary = direction == QuoteFlipDirection.Down && !current.canGoBack
         )
         if (transition.isBoundary) {
@@ -167,6 +172,7 @@ class MainViewModel(private val quoteRepository: QuoteRepository) : ViewModel() 
                             quoteId = quote.id,
                             quote = quote.quote,
                             isQuoteSaved = quote.isSaved,
+                            isQuoteOnWidget = quote.isOnWidget,
                             canGoBack = canGoBack,
                             isNavigating = false,
                             isLoading = false,

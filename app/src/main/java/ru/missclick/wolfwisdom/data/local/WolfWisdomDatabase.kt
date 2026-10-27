@@ -18,7 +18,7 @@ import ru.missclick.wolfwisdom.data.local.dto.QuoteReadingStateDto
         QuoteReadingStateDto::class,
         QuoteCycleEntryDto::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class WolfWisdomDatabase : RoomDatabase() {
@@ -26,6 +26,12 @@ abstract class WolfWisdomDatabase : RoomDatabase() {
     abstract fun quoteNavigationDao(): QuoteNavigationDao
 
     companion object {
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE quotes ADD COLUMN isOnWidget INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE quotes ADD COLUMN savedAt INTEGER DEFAULT NULL")

@@ -4,5 +4,6 @@ data class Quote(
     val id: Long,
     val quote: String,
     val isSaved: Boolean = false,
-    val savedAt: Long? = null
+    val savedAt: Long? = null,
+    val isOnWidget: Boolean = false
 )

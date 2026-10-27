@@ -34,7 +34,8 @@ data class QuoteCardTransition(
     val direction: QuoteFlipDirection,
     val outgoingQuote: String,
     val outgoingIsSaved: Boolean,
-    val isBoundary: Boolean = false
+    val isBoundary: Boolean = false,
+    val outgoingIsOnWidget: Boolean = false
 )
 
 /** Makes one continuous 180-degree turn, revealing the next quote on the other face. */
@@ -52,6 +53,7 @@ fun FlippingQuoteCard(
     onShareClick: () -> Unit,
     onWidgetClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isOnWidget: Boolean = false,
     showActions: Boolean = true,
     minHeight: Dp = 0.dp,
     quoteStyle: TextStyle = WolfTypography.HeroQuote
@@ -125,6 +127,7 @@ fun FlippingQuoteCard(
             },
             quote = if (showOutgoing) transition.outgoingQuote else quote,
             isSaved = if (showOutgoing) transition.outgoingIsSaved else isSaved,
+            isOnWidget = if (showOutgoing) transition.outgoingIsOnWidget else isOnWidget,
             onSaveClick = { if (canInteract) onSaveClick() },
             onShareClick = { if (canInteract) onShareClick() },
             onWidgetClick = { if (canInteract) onWidgetClick() },

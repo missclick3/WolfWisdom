@@ -8,6 +8,10 @@ import ru.missclick.wolfwisdom.data.local.dto.QuoteDto
 
 @Dao
 interface QuoteDao {
+    /** Reconcile all memberships atomically; unchanged rows do not trigger observer loops. */
+    @Query("UPDATE quotes SET isOnWidget = (id IN (:quoteIds)) WHERE isOnWidget != (id IN (:quoteIds))")
+    suspend fun synchronizeWidgetQuotes(quoteIds: List<Long>)
+
     @Query("SELECT COUNT(*) FROM quotes")
     suspend fun count(): Int
 

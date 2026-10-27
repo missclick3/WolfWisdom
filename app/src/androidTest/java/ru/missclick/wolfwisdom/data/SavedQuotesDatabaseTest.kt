@@ -39,9 +39,14 @@ class SavedQuotesDatabaseTest {
             .build().also { database = it }
 
     @Test
-    fun migration_preservesSavedQuotesAndReadingHistory() = runBlocking {
+    fun migration_preservesSavedQuotesAndReadingHistory() = runBlocking { verifyMigration(1) }
+
+    @Test
+    fun migration2_preservesSavedQuotesAndReadingHistory() = runBlocking { verifyMigration(2) }
+
+    private suspend fun verifyMigration(fromVersion: Int) {
         val schema = InstrumentationRegistry.getInstrumentation().context.assets
-            .open("ru.missclick.wolfwisdom.data.local.WolfWisdomDatabase/1.json")
+            .open("ru.missclick.wolfwisdom.data.local.WolfWisdomDatabase/$fromVersion.json")
             .bufferedReader().use { JSONObject(it.readText()).getJSONObject("database") }
         val path = context.getDatabasePath(migrationDatabaseName)
         path.parentFile?.mkdirs()
@@ -65,11 +70,11 @@ class SavedQuotesDatabaseTest {
             old.execSQL("INSERT INTO quote_history (id, quoteId) VALUES (1, 1)")
             old.execSQL("INSERT INTO quote_reading_state (id, currentHistoryId) VALUES (1, 1)")
             old.execSQL("INSERT INTO quote_cycle (quoteId) VALUES (1)")
-            old.version = 1
+            old.version = fromVersion
         }
 
         val migrated = Room.databaseBuilder(context, WolfWisdomDatabase::class.java, migrationDatabaseName)
-            .addMigrations(WolfWisdomDatabase.MIGRATION_1_2)
+            .addMigrations(WolfWisdomDatabase.MIGRATION_1_2, WolfWisdomDatabase.MIGRATION_2_3)
             .build().also { database = it }
 
         val saved = migrated.quoteDao().observeSaved().first()
@@ -81,7 +86,8 @@ class SavedQuotesDatabaseTest {
             assertTrue(it.moveToFirst())
             assertEquals(1, it.getInt(0))
         }
-        assertEquals(2, migrated.openHelper.readableDatabase.version)
+        assertEquals(3, migrated.openHelper.readableDatabase.version)
+        assertFalse(requireNotNull(migrated.quoteDao().getById(1)).isOnWidget)
     }
 
     @Test

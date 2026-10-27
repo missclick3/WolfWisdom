@@ -212,6 +212,7 @@ fun MainScreen(
                             FlippingQuoteCard(
                                 quote = state.quote,
                                 isSaved = state.isQuoteSaved,
+                                isOnWidget = state.isQuoteOnWidget,
                                 swipeState = swipeState,
                                 transition = state.quoteTransition,
                                 enabled = !state.isNavigating && !state.isSavingQuote,
@@ -306,6 +307,7 @@ private fun AdaptiveMainContent(
                     modifier = swipeModifier,
                     quote = state.quote,
                     isSaved = state.isQuoteSaved,
+                    isOnWidget = state.isQuoteOnWidget,
                     swipeState = swipeState,
                     transition = state.quoteTransition,
                     enabled = !state.isNavigating && !state.isSavingQuote,
@@ -338,6 +340,7 @@ private fun AdaptiveMainContent(
             ) {
                 QuoteActionButtons(
                     isSaved = state.isQuoteSaved,
+                    isOnWidget = state.isQuoteOnWidget,
                     enabled = canInteract,
                     onSaveClick = { onAction(MainAction.ToggleQuoteSaved) },
                     onShareClick = { onAction(MainAction.ShareClick) },

@@ -28,9 +28,11 @@ class WidgetStateStore(context: Context) {
     }
 
     fun write(id: Int, state: WidgetState): Boolean = prefs.edit()
-        .putString("instance.$id", encode(state)).commit()
+        .putString("instance.$id", encode(state)).commit().also { if (it) WidgetUpdates.changed() }
 
-    fun delete(id: Int) { prefs.edit().remove("instance.$id").commit() }
+    fun delete(id: Int) {
+        if (prefs.edit().remove("instance.$id").commit()) WidgetUpdates.changed()
+    }
 
     fun restore(oldIds: IntArray, newIds: IntArray) {
         // Snapshot first: restored IDs can overlap IDs from the old host.
@@ -40,7 +42,7 @@ class WidgetStateStore(context: Context) {
         oldIds.zip(newIds).forEachIndexed { index, (_, new) ->
             states[index]?.let { editor.putString("instance.$new", encode(it)) }
         }
-        editor.commit()
+        if (editor.commit()) WidgetUpdates.changed()
     }
 
     companion object {

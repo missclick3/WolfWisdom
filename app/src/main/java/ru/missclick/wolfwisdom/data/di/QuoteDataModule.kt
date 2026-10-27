@@ -14,7 +14,7 @@ val quoteDataModule = module {
             androidContext(),
             WolfWisdomDatabase::class.java,
             "wolf_wisdom.db"
-        ).addMigrations(WolfWisdomDatabase.MIGRATION_1_2).build()
+        ).addMigrations(WolfWisdomDatabase.MIGRATION_1_2, WolfWisdomDatabase.MIGRATION_2_3).build()
     }
     single { get<WolfWisdomDatabase>().quoteDao() }
     single { get<WolfWisdomDatabase>().quoteNavigationDao() }

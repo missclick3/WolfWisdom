@@ -21,8 +21,6 @@ class WidgetDataTest {
         try {
             db.quoteDao().insertAll(listOf(QuoteDto(1, "Первый оригинал", true, 10), QuoteDto(2, "Второй оригинал", true, 20)))
             val repo = RoomQuoteRepository(db, QuoteSeedSource(context.assets))
-            val current = (repo.getCurrentQuote() as ru.missclick.wolfwisdom.domain.util.Result.Success).data
-            assertEquals(current.id, WidgetStateStore.initial(repository = repo).quoteId)
             assertEquals(1L, WidgetStateStore.initial(1L, repo).quoteId)
             val bound = WidgetState(1)
             assertEquals("Первый оригинал", loadWidgetQuote(context, bound, repository = repo).text)

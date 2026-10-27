@@ -35,6 +35,7 @@ fun QuoteComponent(
     onSaveClick: () -> Unit,
     onShareClick: () -> Unit,
     onWidgetClick: () -> Unit,
+    isOnWidget: Boolean = false,
     showActions: Boolean = true,
     minHeight: Dp = 0.dp,
     quoteStyle: TextStyle = WolfTypography.HeroQuote
@@ -92,6 +93,7 @@ fun QuoteComponent(
                 }
                 QuoteActionButtons(
                     isSaved = isSaved,
+                    isOnWidget = isOnWidget,
                     onSaveClick = onSaveClick,
                     onShareClick = onShareClick,
                     onWidgetClick = onWidgetClick

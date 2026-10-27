@@ -7,6 +7,7 @@ data class MainState(
     val quote: String = "",
     val quoteId: Long? = null,
     val isQuoteSaved: Boolean = false,
+    val isQuoteOnWidget: Boolean = false,
     val isSavingQuote: Boolean = false,
     val canGoBack: Boolean = false,
     val isNavigating: Boolean = false,
