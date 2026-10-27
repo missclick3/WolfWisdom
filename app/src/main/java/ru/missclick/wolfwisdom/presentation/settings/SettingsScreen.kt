@@ -1,15 +1,22 @@
 package ru.missclick.wolfwisdom.presentation.settings
 
 import androidx.activity.compose.BackHandler
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -34,14 +41,17 @@ fun SettingsRoot(onBackClick: () -> Unit = {}) {
         onAction = { action ->
             when (action) {
                 SettingsAction.BackPressed -> onBackClick()
+                is SettingsAction.LanguageSelected -> {
+                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(action.language.tag))
+                }
             }
         }
     )
 }
 
-/** Presentation only: both controls show the enabled state from the design. */
 @Composable
 fun SettingsScreen(onAction: (SettingsAction) -> Unit) {
+    val language = AppLanguage.fromTag(LocalConfiguration.current.locales[0].language)
     BackHandler { onAction(SettingsAction.BackPressed) }
     val device = currentDeviceConfiguration()
     val tablet = !device.isMobile
@@ -86,6 +96,61 @@ fun SettingsScreen(onAction: (SettingsAction) -> Unit) {
                 minHeight = if (tablet) 116.dp else 100.dp,
                 backdrop = backdrop
             )
+            LanguageSettingsCard(
+                language = language,
+                onSelect = { onAction(SettingsAction.LanguageSelected(it)) },
+                backdrop = backdrop,
+                modifier = Modifier.widthIn(max = columnWidth).fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun LanguageSettingsCard(
+    language: AppLanguage,
+    onSelect: (AppLanguage) -> Unit,
+    backdrop: WolfGlassBackdrop,
+    modifier: Modifier = Modifier
+) {
+    WolfGlassCard(backdrop, modifier) {
+        Column(Modifier.fillMaxWidth().padding(vertical = WolfSpacing.Space16)) {
+            Text(
+                stringResource(R.string.settings_language),
+                modifier = Modifier.padding(horizontal = WolfSpacing.Space20, vertical = WolfSpacing.Space4),
+                style = WolfTypography.Body,
+                color = WolfColors.Text
+            )
+            Column(Modifier.selectableGroup()) {
+                AppLanguage.entries.forEach { option ->
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .selectable(
+                                selected = option == language,
+                                role = Role.RadioButton,
+                                onClick = { if (option != language) onSelect(option) }
+                            )
+                            .heightIn(min = 56.dp)
+                            .padding(horizontal = WolfSpacing.Space20, vertical = WolfSpacing.Space8),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(WolfSpacing.Space16)
+                    ) {
+                        Image(painterResource(option.flag), null, Modifier.size(36.dp, 24.dp))
+                        Text(
+                            stringResource(option.label), Modifier.weight(1f),
+                            style = WolfTypography.Body, color = WolfColors.Text
+                        )
+                        RadioButton(
+                            selected = option == language,
+                            onClick = null,
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = WolfColors.Accent,
+                                unselectedColor = WolfColors.Secondary
+                            )
+                        )
+                    }
+                }
+            }
         }
     }
 }

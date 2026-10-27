@@ -2,7 +2,7 @@ package ru.missclick.wolfwisdom
 
 import android.media.AudioManager
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
@@ -12,7 +12,7 @@ import ru.missclick.wolfwisdom.navigation.WolfNavHost
 import ru.missclick.wolfwisdom.presentation.components.WolfWisdomScreen
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         SeasonalIconManager.update(this)

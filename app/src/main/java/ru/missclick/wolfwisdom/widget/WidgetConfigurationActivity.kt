@@ -8,7 +8,7 @@ import android.os.Bundle
 import android.widget.FrameLayout
 import android.widget.RemoteViews
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
@@ -45,7 +45,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import ru.missclick.wolfwisdom.ui.theme.*
 
-class WidgetConfigurationActivity : ComponentActivity() {
+class WidgetConfigurationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setResult(RESULT_CANCELED)

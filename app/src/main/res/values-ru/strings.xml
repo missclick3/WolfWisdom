@@ -35,6 +35,7 @@
     <string name="saved_remove_error">Не удалось удалить цитату</string>
     <string name="quote_share_error">Не удалось поделиться цитатой</string>
     <string name="settings">Настройки</string>
+    <string name="settings_language">Язык</string>
     <string name="settings_sound">Звуковые эффекты</string>
     <string name="settings_sound_description">Звуки при перелистывании, лайках и других действиях.</string>
     <string name="settings_vibration">Виброотклик</string>
