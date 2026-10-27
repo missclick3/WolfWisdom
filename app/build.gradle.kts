@@ -13,6 +13,15 @@ val localProperties = Properties().apply {
 val supportLink = localProperties.getProperty("SUPPORT_LINK")
     ?.takeIf { it.isNotBlank() }
     ?: error("Set SUPPORT_LINK in local.properties")
+val contactProperties = listOf(
+    "CONTACT_TELEGRAM_USERNAME",
+    "CONTACT_TELEGRAM_CHANNEL",
+    "CONTACT_BOOSTY_LINK",
+    "CONTACT_EMAIL"
+).associateWith { name ->
+    localProperties.getProperty(name)?.takeIf { it.isNotBlank() }
+        ?: error("Set $name in local.properties")
+}
 
 android {
     namespace = "ru.missclick.wolfwisdom"
@@ -32,6 +41,9 @@ android {
             "SUPPORT_LINK",
             "\"${supportLink.replace("\\", "\\\\").replace("\"", "\\\"")}\""
         )
+        contactProperties.forEach { (name, value) ->
+            buildConfigField("String", name, "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
+        }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

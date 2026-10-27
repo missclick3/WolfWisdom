@@ -42,6 +42,7 @@
     <string name="contacts_channel">Telegram channel</string>
     <string name="contacts_telegram">Message on Telegram</string>
     <string name="contacts_email">Send an email</string>
+    <string name="contacts_app_unavailable">No app available to open this contact</string>
     <string name="contacts_news_description">News, updates, and support for the project</string>
     <string name="contacts_message_description">Get in touch with questions and suggestions</string>
     <string name="loading_quote">Loading quote</string>

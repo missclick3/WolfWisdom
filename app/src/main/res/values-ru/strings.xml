@@ -42,6 +42,7 @@
     <string name="contacts_channel">Telegram-канал</string>
     <string name="contacts_telegram">Написать в Telegram</string>
     <string name="contacts_email">Написать на почту</string>
+    <string name="contacts_app_unavailable">Нет приложения для открытия контакта</string>
     <string name="contacts_news_description">Новости, обновления и поддержка проекта</string>
     <string name="contacts_message_description">Для связи и предложений</string>
     <string name="loading_quote">Загружаем цитату</string>

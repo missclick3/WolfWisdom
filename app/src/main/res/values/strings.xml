@@ -44,7 +44,7 @@
     <string name="contacts_email">Send an email</string>
     <string name="contacts_news_description">News, updates, and support for the project</string>
     <string name="contacts_message_description">Get in touch with questions and suggestions</string>
-    <string name="contacts_email_address" translatable="false">avarlamova.dev@gmail.com</string>
+    <string name="contacts_app_unavailable">No app available to open this contact</string>
     <string name="loading_quote">Loading quote</string>
     <string name="error_brand_title">Wolf\'s Wisdom</string>
     <string name="error_load_label">COULD NOT LOAD</string>
