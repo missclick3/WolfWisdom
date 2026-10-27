@@ -1,5 +1,7 @@
 package ru.missclick.wolfwisdom.presentation.settings
 
+import ru.missclick.wolfwisdom.analytics.rememberScreenAnalytics
+
 import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
@@ -38,12 +40,16 @@ import ru.missclick.wolfwisdom.ui.theme.*
 
 @Composable
 fun SettingsRoot(onBackClick: () -> Unit = {}) {
+    val analytics = rememberScreenAnalytics(::SettingsAnalytics)
     val preferences = rememberFeedbackPreferences()
     val settings by rememberFeedbackSettings(preferences)
+    val previousLanguage = AppLanguage.fromTag(LocalConfiguration.current.locales[0].language).tag
     SettingsScreen(
         soundEffectsEnabled = settings.soundEffectsEnabled,
         vibrationEnabled = settings.vibrationEnabled,
+        onBackButtonClick = { analytics.backClicked(); onBackClick() },
         onAction = { action ->
+            analytics.onAction(action, previousLanguage)
             when (action) {
                 SettingsAction.BackPressed -> onBackClick()
                 is SettingsAction.LanguageSelected -> {
@@ -60,7 +66,8 @@ fun SettingsRoot(onBackClick: () -> Unit = {}) {
 fun SettingsScreen(
     soundEffectsEnabled: Boolean = true,
     vibrationEnabled: Boolean = true,
-    onAction: (SettingsAction) -> Unit
+    onAction: (SettingsAction) -> Unit,
+    onBackButtonClick: () -> Unit = { onAction(SettingsAction.BackPressed) }
 ) {
     val language = AppLanguage.fromTag(LocalConfiguration.current.locales[0].language)
     BackHandler { onAction(SettingsAction.BackPressed) }
@@ -79,7 +86,7 @@ fun SettingsScreen(
     }
     WolfServiceScreen(
         title = stringResource(R.string.settings),
-        onBackClick = { onAction(SettingsAction.BackPressed) },
+        onBackClick = onBackButtonClick,
         device = device
     ) { backdrop ->
         // The body scrolls independently, keeping Back accessible on short windows.

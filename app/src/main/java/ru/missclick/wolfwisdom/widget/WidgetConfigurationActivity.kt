@@ -1,5 +1,9 @@
 package ru.missclick.wolfwisdom.widget
 
+import ru.missclick.wolfwisdom.analytics.ProvideAnalytics
+import ru.missclick.wolfwisdom.analytics.rememberScreenAnalytics
+import androidx.compose.runtime.saveable.rememberSaveable
+
 import android.app.Application
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -61,15 +65,30 @@ class WidgetConfigurationActivity : AppCompatActivity() {
         enableEdgeToEdge()
         androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
         setContent {
-            val state by model.state.collectAsStateWithLifecycle()
-            WolfWisdomTheme {
-                LaunchedEffect(state.complete) {
-                    if (state.complete) {
-                        if (!pin) setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
-                        finish()
+            ProvideAnalytics {
+                val analytics = rememberScreenAnalytics(::WidgetConfigurationAnalytics)
+                var reported by rememberSaveable { mutableStateOf(false) }
+                LaunchedEffect(Unit) {
+                    if (!reported) {
+                        analytics.opened(if (pin) "internal" else "launcher")
+                        reported = true
                     }
                 }
-                ConfigurationContent(state, { finish() }, model::select, model::confirm, model::retry)
+                val state by model.state.collectAsStateWithLifecycle()
+                WolfWisdomTheme {
+                    LaunchedEffect(state.complete) {
+                        if (state.complete) {
+                            if (!pin) setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
+                            finish()
+                        }
+                    }
+                    ConfigurationContent(state, { analytics.backClicked(); finish() },
+                        { theme ->
+                            if (theme != state.theme) { analytics.themeClicked(theme); model.select(theme) }
+                        },
+                        { analytics.createClicked(); model.confirm() },
+                        { analytics.retryClicked(); model.retry() })
+                }
             }
         }
     }

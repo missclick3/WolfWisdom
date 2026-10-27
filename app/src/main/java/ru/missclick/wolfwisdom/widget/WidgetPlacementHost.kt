@@ -1,6 +1,8 @@
 package ru.missclick.wolfwisdom.widget
 
 import android.app.Application
+import ru.missclick.wolfwisdom.analytics.rememberScreenAnalytics
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -42,6 +44,7 @@ data class WidgetPlacementEntry(val id: Int, val state: WidgetState, val quote: 
 
 data class WidgetPlacementUi(
     val active: Boolean = false,
+    val sourceScreen: String = "internal",
     val quote: WidgetQuote? = null,
     val widgets: List<WidgetPlacementEntry> = emptyList(),
     val selectedId: Int? = null,
@@ -75,16 +78,18 @@ internal suspend fun replaceWidgetQuote(context: android.content.Context, id: In
 
 class WidgetPlacementViewModel(application: Application, private val saved: SavedStateHandle) : AndroidViewModel(application) {
     private val _state = MutableStateFlow(WidgetPlacementUi(
-        active = saved["placement_active"] ?: false, selectedId = saved["selected_widget"]))
+        active = saved["placement_active"] ?: false, sourceScreen = saved["placement_source"] ?: "internal",
+        selectedId = saved["selected_widget"]))
     val state = _state.asStateFlow()
     private var refreshJob: Job? = null
 
-    fun open(quoteId: Long?) {
+    fun open(quoteId: Long?, sourceScreen: String = "internal") {
         if (_state.value.active) return
+        saved["placement_source"] = sourceScreen
         saved["quote_id"] = quoteId
         saved["selected_widget"] = null
         saved["placement_active"] = true
-        _state.value = WidgetPlacementUi(active = true)
+        _state.value = WidgetPlacementUi(active = true, sourceScreen = sourceScreen)
         refresh()
     }
 
@@ -151,7 +156,17 @@ class WidgetPlacementViewModel(application: Application, private val saved: Save
 @Composable
 internal fun WidgetPlacementHost(model: WidgetPlacementViewModel) {
     val context = LocalContext.current
+    val analytics = rememberScreenAnalytics(::WidgetPlacementAnalytics)
+    var reported by rememberSaveable { mutableStateOf(false) }
     val state by model.state.collectAsStateWithLifecycle()
+    val visible = state.active && !(state.loading && state.widgets.isEmpty()) && !state.create && !state.complete
+    LaunchedEffect(state.active, visible) {
+        if (!state.active) reported = false
+        else if (visible && !reported) {
+            analytics.placementOpened(state.sourceScreen)
+            reported = true
+        }
+    }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { model.refresh() }
     LaunchedEffect(state.complete, state.create) {
         if (state.create) {
@@ -164,9 +179,14 @@ internal fun WidgetPlacementHost(model: WidgetPlacementViewModel) {
         // Skip even the loading sheet when no host instances exist.
         if (state.loading && state.widgets.isEmpty()) return
         WidgetPlacementContent(state, model::dismiss, {
+            analytics.createClicked()
             WidgetPin.openCreation(context, state.quote?.id)
             model.dismiss()
-        }, model::select, model::replace, model::refresh)
+        },
+            { id -> analytics.targetClicked(); model.select(id) },
+            { analytics.replaceClicked(); model.replace() },
+            { analytics.retryClicked(); model.refresh() },
+            closeClick = { analytics.closeClicked(); model.dismiss() })
     }
 }
 
@@ -174,7 +194,8 @@ internal fun WidgetPlacementHost(model: WidgetPlacementViewModel) {
 @Composable
 internal fun WidgetPlacementContent(
     state: WidgetPlacementUi, dismiss: () -> Unit, create: () -> Unit,
-    select: (Int) -> Unit, replace: () -> Unit, retry: () -> Unit
+    select: (Int) -> Unit, replace: () -> Unit, retry: () -> Unit,
+    closeClick: () -> Unit = dismiss
 ) {
     if (state.create || state.complete) return
     val configuration = LocalConfiguration.current
@@ -183,7 +204,7 @@ internal fun WidgetPlacementContent(
             dismissOnBackPress = !state.submitting, dismissOnClickOutside = !state.submitting)) {
             Surface(Modifier.safeDrawingPadding().padding(24.dp).widthIn(max = 560.dp).fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp), color = WolfColors.Surface) {
-                PlacementBody(state, dismiss, create, select, replace, retry)
+                PlacementBody(state, closeClick, create, select, replace, retry)
             }
         }
     } else {
@@ -199,7 +220,7 @@ internal fun WidgetPlacementContent(
             sheetGesturesEnabled = !state.submitting,
             containerColor = WolfColors.Surface, contentColor = WolfColors.Text,
             properties = ModalBottomSheetProperties(shouldDismissOnBackPress = !state.submitting)) {
-            PlacementBody(state, dismiss, create, select, replace, retry)
+            PlacementBody(state, closeClick, create, select, replace, retry)
         }
     }
 }

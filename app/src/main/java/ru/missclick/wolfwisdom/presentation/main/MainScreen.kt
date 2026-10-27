@@ -1,5 +1,7 @@
 package ru.missclick.wolfwisdom.presentation.main
 
+import ru.missclick.wolfwisdom.analytics.rememberScreenAnalytics
+
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
@@ -78,6 +80,7 @@ fun MainRoot(
     onNavigateToSettings: () -> Unit = {},
     onLoadError: () -> Unit = {}
 ) {
+    val analytics = rememberScreenAnalytics(::MainAnalytics)
     LoadErrorNavigationEffect(viewModel.errorHandler, onLoadError)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -110,6 +113,7 @@ fun MainRoot(
     MainScreen(
         state = state,
         onAction = { action ->
+            analytics.onAction(action, state)
             when (action) {
                 MainAction.BackPressed -> {
                     if (snackbarHostState.currentSnackbarData?.visuals?.message == closeHeadline) {

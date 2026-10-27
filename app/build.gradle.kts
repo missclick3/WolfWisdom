@@ -1,4 +1,5 @@
 import java.util.Properties
+import java.util.UUID
 
 plugins {
     alias(libs.plugins.android.application)
@@ -10,6 +11,10 @@ plugins {
 val localProperties = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
+val metricKey = localProperties.getProperty("METRIC_KEY")
+    ?.takeIf { it.isNotBlank() }
+    ?: error("Set METRIC_KEY in local.properties")
+require(runCatching { UUID.fromString(metricKey) }.isSuccess) { "METRIC_KEY must be a UUID" }
 val supportLink = localProperties.getProperty("SUPPORT_LINK")
     ?.takeIf { it.isNotBlank() }
     ?: error("Set SUPPORT_LINK in local.properties")
@@ -35,6 +40,7 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "METRIC_KEY", "\"$metricKey\"")
 
         buildConfigField(
             "String",
@@ -72,6 +78,7 @@ ksp {
 }
 
 dependencies {
+    implementation(libs.appmetrica.analytics)
     implementation(libs.androidx.appcompat)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

@@ -38,6 +38,7 @@ fun WolfNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
+    NavigationAnalytics(navController)
     val uriHandler = LocalUriHandler.current
     val widgetPlacement: WidgetPlacementViewModel = viewModel()
     QuoteShareHost(modifier) { shareQuote ->
@@ -53,7 +54,7 @@ fun WolfNavHost(
                 val mainViewModel = koinViewModel<MainViewModel>()
                 MainRoot(
                     viewModel = mainViewModel,
-                    onWidgetClick = { widgetPlacement.open(mainViewModel.state.value.quoteId) },
+                    onWidgetClick = { widgetPlacement.open(mainViewModel.state.value.quoteId, "main") },
                     onLoadError = {
                         navController.navigateFrom(entry) {
                             navigate(Screen.Error(LoadErrorSource.MAIN)) { launchSingleTop = true }
@@ -88,7 +89,7 @@ fun WolfNavHost(
                         }
                     },
                     onBackClick = { navController.popBackStackFrom(entry) },
-                    onWidgetClick = { widgetPlacement.open(it.id) },
+                    onWidgetClick = { widgetPlacement.open(it.id, "saved") },
                     onShareClick = { quote, scene -> shareQuote(quote.quote, scene) }
                 )
             }
@@ -123,7 +124,7 @@ fun WolfNavHost(
                         }
                     }
                 }
-                ErrorRoot(onRetry = handler::retry)
+                ErrorRoot(onRetry = handler::retry, source = source)
             }
         }
     }

@@ -1,5 +1,8 @@
 package ru.missclick.wolfwisdom.presentation.error
 
+import ru.missclick.wolfwisdom.analytics.rememberScreenAnalytics
+import ru.missclick.wolfwisdom.navigation.LoadErrorSource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -45,8 +48,10 @@ import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 @Composable
 fun ErrorRoot(
     onRetry: suspend () -> Unit,
-    viewModel: ErrorViewModel = viewModel()
+    viewModel: ErrorViewModel = viewModel(),
+    source: LoadErrorSource = LoadErrorSource.MAIN
 ) {
+    val analytics = rememberScreenAnalytics { ErrorAnalytics(it, source) }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val retry by rememberUpdatedState(onRetry)
     LaunchedEffect(viewModel) {
@@ -58,7 +63,10 @@ fun ErrorRoot(
             }
         }
     }
-    ErrorScreen(state = state, onAction = viewModel::onAction)
+    ErrorScreen(state = state, onAction = { action ->
+        if (action == ErrorAction.Retry) analytics.retryClicked()
+        viewModel.onAction(action)
+    })
 }
 
 // Colors in the error frames differ slightly from the main screen's palette.

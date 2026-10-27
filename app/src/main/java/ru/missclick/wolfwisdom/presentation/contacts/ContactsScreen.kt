@@ -1,5 +1,7 @@
 package ru.missclick.wolfwisdom.presentation.contacts
 
+import ru.missclick.wolfwisdom.analytics.rememberScreenAnalytics
+
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -50,9 +52,12 @@ private enum class ContactCard(
 
 @Composable
 fun ContactsRoot(onBackClick: () -> Unit = {}) {
+    val analytics = rememberScreenAnalytics(::ContactsAnalytics)
     val context = LocalContext.current
     ContactsScreen(
+        onBackButtonClick = { analytics.backClicked(); onBackClick() },
         onAction = { action ->
+            analytics.onAction(action)
             if (action == ContactsAction.BackPressed) {
                 onBackClick()
             } else {
@@ -80,7 +85,10 @@ fun ContactsRoot(onBackClick: () -> Unit = {}) {
 }
 
 @Composable
-fun ContactsScreen(onAction: (ContactsAction) -> Unit) {
+fun ContactsScreen(
+    onAction: (ContactsAction) -> Unit,
+    onBackButtonClick: () -> Unit = { onAction(ContactsAction.BackPressed) }
+) {
     BackHandler { onAction(ContactsAction.BackPressed) }
     val device = currentDeviceConfiguration()
     val landscape = device == DeviceConfiguration.MOBILE_LANDSCAPE ||
@@ -101,7 +109,7 @@ fun ContactsScreen(onAction: (ContactsAction) -> Unit) {
     }
     WolfServiceScreen(
         title = stringResource(R.string.contacts),
-        onBackClick = { onAction(ContactsAction.BackPressed) },
+        onBackClick = onBackButtonClick,
         device = device
     ) { backdrop ->
         Column(

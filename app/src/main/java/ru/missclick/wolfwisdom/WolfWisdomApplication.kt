@@ -1,5 +1,8 @@
 package ru.missclick.wolfwisdom
 
+import ru.missclick.wolfwisdom.analytics.AppMetricaAnalyticsTracker
+import ru.missclick.wolfwisdom.analytics.analyticsModule
+
 import android.app.Application
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
@@ -11,10 +14,11 @@ import ru.missclick.wolfwisdom.widget.WidgetUpdates
 class WolfWisdomApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        AppMetricaAnalyticsTracker.initialize(this)
         SeasonalIconManager.initialize(this)
         startKoin {
             androidContext(this@WolfWisdomApplication)
-            modules(quoteDataModule, mainModule, savedModule)
+            modules(quoteDataModule, mainModule, savedModule, analyticsModule)
         }
         WidgetUpdates.initialize(this)
     }

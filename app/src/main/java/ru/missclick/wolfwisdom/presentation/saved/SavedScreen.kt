@@ -1,5 +1,7 @@
 package ru.missclick.wolfwisdom.presentation.saved
 
+import ru.missclick.wolfwisdom.analytics.rememberScreenAnalytics
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -70,6 +72,7 @@ fun SavedRoot(
     onWidgetClick: (Quote) -> Unit = {},
     onLoadError: () -> Unit = {}
 ) {
+    val analytics = rememberScreenAnalytics(::SavedAnalytics)
     LoadErrorNavigationEffect(viewModel.errorHandler, onLoadError)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val resources = LocalResources.current
@@ -97,13 +100,17 @@ fun SavedRoot(
 
     SavedScreen(
         state = state,
-        onAction = viewModel::onAction,
+        onAction = { action ->
+            analytics.onAction(action)
+            viewModel.onAction(action)
+        },
         onBackClick = {
+            analytics.backClicked()
             keyboard?.hide()
             onBackClick()
         },
-        onShareClick = onShareClick,
-        onWidgetClick = onWidgetClick,
+        onShareClick = { quote, scene -> analytics.shareClicked(); onShareClick(quote, scene) },
+        onWidgetClick = { quote -> analytics.widgetClicked(); onWidgetClick(quote) },
         snackbarHost = { WolfSnackbarHost(snackbarHostState) }
     )
 }
