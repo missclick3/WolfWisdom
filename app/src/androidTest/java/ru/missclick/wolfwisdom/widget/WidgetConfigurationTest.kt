@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -32,6 +33,7 @@ class WidgetConfigurationTest {
     private val quoteId = 989898L
 
     @Before fun seed() = runBlocking {
+        database.quoteDao().insertAll(listOf(QuoteDto(quoteId + 1, "A different quote for replacement.", false, null)))
         database.quoteDao().insertAll(listOf(QuoteDto(quoteId, "Это полный оригинал цитаты. ".repeat(40), true, Long.MAX_VALUE)))
     }
 
@@ -42,6 +44,7 @@ class WidgetConfigurationTest {
         }
         ids.forEach { WidgetStateStore(context).delete(it); host.deleteAppWidgetId(it) }
         database.openHelper.writableDatabase.execSQL("DELETE FROM quotes WHERE id = $quoteId")
+        database.openHelper.writableDatabase.execSQL("DELETE FROM quotes WHERE id = ${quoteId + 1}")
         instrumentation.uiAutomation.dropShellPermissionIdentity()
     }
 
@@ -205,6 +208,125 @@ class WidgetConfigurationTest {
         }
         assertEquals(WidgetState(quoteId, WidgetTheme.LIGHT), WidgetStateStore(context).read(id))
         assertFalse(database.quoteDao().getById(quoteId)!!.isSaved)
+    }
+
+    @Test fun replacement_changesOnlySelectedInstanceAndPreservesThemeAndSize(): Unit = runBlocking {
+        val first = allocate(FavoriteWidget3::class.java)
+        val second = allocate(FavoriteWidget4::class.java)
+        WidgetStateStore(context).write(first, WidgetState(quoteId + 1, WidgetTheme.ANDROID))
+        WidgetStateStore(context).write(second, WidgetState(quoteId + 1, WidgetTheme.LIGHT))
+        database.quoteDao().setSaved(quoteId, false, null)
+        val options = manager.getAppWidgetOptions(first)
+        assertTrue(replaceWidgetQuote(context, first, quoteId))
+        assertEquals(WidgetState(quoteId, WidgetTheme.ANDROID), WidgetStateStore(context).read(first))
+        assertEquals(WidgetState(quoteId + 1, WidgetTheme.LIGHT), WidgetStateStore(context).read(second))
+        assertEquals(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+            manager.getAppWidgetOptions(first).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH))
+        assertFalse(database.quoteDao().getById(quoteId)!!.isSaved)
+    }
+
+    @Test fun replacement_rejectsDeletedWidgetAndUnavailableQuote(): Unit = runBlocking {
+        val id = allocate()
+        val original = WidgetState(quoteId, WidgetTheme.LIGHT)
+        WidgetStateStore(context).write(id, original)
+        assertFalse(replaceWidgetQuote(context, id, Long.MAX_VALUE))
+        assertEquals(original, WidgetStateStore(context).read(id))
+        host.deleteAppWidgetId(id)
+        assertFalse(replaceWidgetQuote(context, id, quoteId))
+    }
+
+    @Test fun placement_selectsExplicitlySurvivesRotationAndConfirms(): Unit = runBlocking {
+        val id = allocate()
+        WidgetStateStore(context).write(id, WidgetState(quoteId + 1, WidgetTheme.ANDROID))
+        val intent = Intent(context, ru.missclick.wolfwisdom.MainActivity::class.java)
+        ActivityScenario.launch<ru.missclick.wolfwisdom.MainActivity>(intent).use { scenario ->
+            scenario.onActivity { ViewModelProvider(it)[WidgetPlacementViewModel::class.java].open(quoteId) }
+            compose.waitUntil(15_000) {
+                compose.onAllNodesWithText(context.getString(ru.missclick.wolfwisdom.R.string.widget_replace)).fetchSemanticsNodes().isNotEmpty()
+            }
+            val replace = context.getString(ru.missclick.wolfwisdom.R.string.widget_replace)
+            compose.onNodeWithText(replace).performScrollTo().assertIsNotEnabled()
+            compose.onNodeWithTag("widget-instance-$id").performScrollTo().performClick()
+            scenario.recreate()
+            compose.waitUntil(15_000) {
+                var selected = false
+                scenario.onActivity { selected = ViewModelProvider(it)[WidgetPlacementViewModel::class.java].state.value.selectedId == id }
+                selected
+            }
+            compose.onNodeWithText(replace).performScrollTo().assertIsEnabled()
+            val screenshot = instrumentation.uiAutomation.takeScreenshot()
+            java.io.File(context.getExternalFilesDir(null), "widget-placement.png").outputStream().use {
+                screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+            }
+            screenshot.recycle()
+            compose.onNodeWithText(replace).performClick()
+            compose.waitUntil(15_000) {
+                var active = true
+                scenario.onActivity { active = ViewModelProvider(it)[WidgetPlacementViewModel::class.java].state.value.active }
+                !active
+            }
+            assertEquals(androidx.lifecycle.Lifecycle.State.RESUMED, scenario.state)
+            assertEquals(WidgetState(quoteId, WidgetTheme.ANDROID), WidgetStateStore(context).read(id))
+        }
+    }
+
+    @Test fun placement_dismissAndReopenClearsPreviousSelection(): Unit = runBlocking {
+        val id = allocate()
+        val original = WidgetState(quoteId + 1, WidgetTheme.LIGHT)
+        WidgetStateStore(context).write(id, original)
+        ActivityScenario.launch<ru.missclick.wolfwisdom.MainActivity>(
+            Intent(context, ru.missclick.wolfwisdom.MainActivity::class.java)).use { scenario ->
+            scenario.onActivity { ViewModelProvider(it)[WidgetPlacementViewModel::class.java].open(quoteId) }
+            compose.waitUntil(15_000) { compose.onAllNodesWithTag("widget-instance-$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("widget-instance-$id").performScrollTo().performClick()
+            scenario.onActivity { ViewModelProvider(it)[WidgetPlacementViewModel::class.java].dismiss() }
+            compose.waitForIdle()
+            assertEquals(original, WidgetStateStore(context).read(id))
+            scenario.onActivity { ViewModelProvider(it)[WidgetPlacementViewModel::class.java].open(quoteId + 1) }
+            compose.waitUntil(15_000) { compose.onAllNodesWithTag("widget-instance-$id").fetchSemanticsNodes().isNotEmpty() }
+            scenario.onActivity {
+                val draft = ViewModelProvider(it)[WidgetPlacementViewModel::class.java].state.value
+                assertNull(draft.selectedId)
+                assertEquals(quoteId + 1, draft.quote?.id)
+            }
+            compose.onNodeWithText(context.getString(ru.missclick.wolfwisdom.R.string.widget_replace))
+                .performScrollTo().assertIsNotEnabled()
+        }
+    }
+
+    @Test fun placement_threeRowViewportScrollsWithoutMovingSheetOrReplayingEntry(): Unit = runBlocking {
+        repeat(4) {
+            val id = allocate()
+            WidgetStateStore(context).write(id, WidgetState(quoteId + 1, WidgetTheme.LIGHT))
+        }
+        ActivityScenario.launch<ru.missclick.wolfwisdom.MainActivity>(
+            Intent(context, ru.missclick.wolfwisdom.MainActivity::class.java)).use { scenario ->
+            scenario.onActivity { ViewModelProvider(it)[WidgetPlacementViewModel::class.java].open(quoteId) }
+            compose.waitUntil(15_000) { compose.onAllNodesWithTag("widget-instance-list").fetchSemanticsNodes().isNotEmpty() }
+            compose.waitForIdle()
+            var widgetIds = emptyList<Int>()
+            scenario.onActivity { widgetIds = ViewModelProvider(it)[WidgetPlacementViewModel::class.java].state.value.widgets.map { entry -> entry.id } }
+            val list = compose.onNodeWithTag("widget-instance-list")
+            list.performScrollTo()
+            val firstRow = compose.onNodeWithTag("widget-instance-${widgetIds[0]}")
+            val firstBounds = firstRow.getUnclippedBoundsInRoot()
+            list.assertHeightIsEqualTo((firstBounds.bottom - firstBounds.top) * 3 + 16.dp)
+            compose.onNodeWithTag("widget-instance-${widgetIds[3]}").assertIsNotDisplayed()
+            val sheet = compose.onNodeWithTag("widget-placement-sheet")
+            val initialSheetBounds = sheet.getUnclippedBoundsInRoot()
+            val initialListBounds = list.getUnclippedBoundsInRoot()
+            compose.onNodeWithTag("widget-instance-${widgetIds[3]}").performScrollTo().assertIsDisplayed()
+            assertEquals(initialListBounds, list.getUnclippedBoundsInRoot())
+            assertEquals(initialSheetBounds, sheet.getUnclippedBoundsInRoot())
+            compose.mainClock.autoAdvance = false
+            try {
+                compose.onNodeWithTag("widget-instance-${widgetIds[3]}").performClick()
+                repeat(5) {
+                    compose.mainClock.advanceTimeByFrame()
+                    assertEquals("Selecting must not restart the sheet animation", initialSheetBounds, sheet.getUnclippedBoundsInRoot())
+                }
+            } finally { compose.mainClock.autoAdvance = true }
+        }
     }
 
     @Test fun pinConfirmation_doesNotSaveQuote(): Unit = runBlocking {

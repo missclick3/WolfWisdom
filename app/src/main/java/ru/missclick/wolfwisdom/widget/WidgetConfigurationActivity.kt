@@ -241,7 +241,7 @@ private fun WidgetPreview(state: WidgetConfigUi, width: Float, height: Float) {
 }
 
 object WidgetPin {
-    fun open(context: Context, quoteId: Long?) {
+    fun openCreation(context: Context, quoteId: Long?) {
         if (!AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported) {
             Toast.makeText(context, R.string.widget_pin_unavailable, Toast.LENGTH_LONG).show()
             return

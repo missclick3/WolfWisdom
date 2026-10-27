@@ -22,4 +22,17 @@
     <string name="widget_type_sample">Aa</string>
     <string name="widget_selected">Selected</string>
     <string name="widget_pin_unavailable">Add the widget from your home screen widget picker</string>
+    <string name="widget_destination_title">Where to put the quote?</string>
+    <string name="widget_selected_quote">“%1$s”</string>
+    <string name="widget_close">Close</string>
+    <string name="widget_create_new">Create a new widget</string>
+    <string name="widget_add_to_home">Add to home screen</string>
+    <string name="widget_replace_existing">Replace in an existing widget</string>
+    <string name="widget_replace_hint">Only the selected widget will change</string>
+    <string name="widget_replace">Replace quote</string>
+    <string name="widget_replacing">Replacing…</string>
+    <string name="widget_replace_error">Could not update the widget. It may have been removed. Please try again.</string>
+    <string name="widget_placement_theme_dark">Dark theme</string>
+    <string name="widget_placement_theme_light">Light theme</string>
+    <string name="widget_placement_theme_android">Android theme</string>
 </resources>

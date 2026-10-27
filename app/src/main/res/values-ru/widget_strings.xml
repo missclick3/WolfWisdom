@@ -22,4 +22,17 @@
     <string name="widget_type_sample">Аа</string>
     <string name="widget_selected">Выбрано</string>
     <string name="widget_pin_unavailable">Добавьте виджет через меню виджетов рабочего стола</string>
+    <string name="widget_destination_title">Куда поставить цитату?</string>
+    <string name="widget_selected_quote">«%1$s»</string>
+    <string name="widget_close">Закрыть</string>
+    <string name="widget_create_new">Создать новый виджет</string>
+    <string name="widget_add_to_home">Добавить на главный экран</string>
+    <string name="widget_replace_existing">Заменить в существующем</string>
+    <string name="widget_replace_hint">Цитата изменится только в выбранном виджете</string>
+    <string name="widget_replace">Заменить цитату</string>
+    <string name="widget_replacing">Замена…</string>
+    <string name="widget_replace_error">Не удалось обновить виджет. Возможно, он был удалён. Попробуйте ещё раз.</string>
+    <string name="widget_placement_theme_dark">Тёмная тема</string>
+    <string name="widget_placement_theme_light">Светлая тема</string>
+    <string name="widget_placement_theme_android">Тема Android</string>
 </resources>
