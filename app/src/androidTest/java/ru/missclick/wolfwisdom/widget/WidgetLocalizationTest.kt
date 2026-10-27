@@ -33,8 +33,8 @@ class WidgetLocalizationTest {
             assertEquals(localized.getString(R.string.widget_empty), quote.text)
             assertNull(state.quoteId)
             assertEquals(WidgetTheme.ANDROID, state.theme)
-            assertEquals(localized.getString(R.string.widget_preview, "3×2"),
-                if (language == "ru") "Предпросмотр · 3×2" else "Preview · 3×2")
+            assertEquals(localized.getString(R.string.widget_preview),
+                if (language == "ru") "Предпросмотр" else "Preview")
         }
     }
 }

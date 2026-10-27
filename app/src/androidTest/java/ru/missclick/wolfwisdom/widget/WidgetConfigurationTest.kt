@@ -112,7 +112,7 @@ class WidgetConfigurationTest {
         val id = allocate(FavoriteWidget3::class.java)
         ActivityScenario.launchActivityForResult<WidgetConfigurationActivity>(intent(id)).use { scenario ->
             ready(scenario)
-            compose.waitUntil(10_000) { compose.onAllNodesWithText(context.getString(ru.missclick.wolfwisdom.R.string.widget_preview, "3×2")).fetchSemanticsNodes().isNotEmpty() }
+            compose.waitUntil(10_000) { compose.onAllNodesWithText(context.getString(ru.missclick.wolfwisdom.R.string.widget_preview)).fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithText("Android").performScrollTo().performClick()
             scenario.onActivity {
                 assertEquals(WidgetTheme.ANDROID, ViewModelProvider(it)[WidgetConfigViewModel::class.java].state.value.theme)
@@ -149,7 +149,7 @@ class WidgetConfigurationTest {
         ActivityScenario.launchActivityForResult<WidgetConfigurationActivity>(intent(id)).use { scenario ->
             ready(scenario)
             compose.waitForIdle()
-            compose.waitUntil(10_000) { compose.onAllNodesWithText(context.getString(ru.missclick.wolfwisdom.R.string.widget_preview, "3×2")).fetchSemanticsNodes().isNotEmpty() }
+            compose.waitUntil(10_000) { compose.onAllNodesWithText(context.getString(ru.missclick.wolfwisdom.R.string.widget_preview)).fetchSemanticsNodes().isNotEmpty() }
             scenario.onActivity {
                 assertEquals(WidgetTheme.ANDROID, ViewModelProvider(it)[WidgetConfigViewModel::class.java].state.value.theme)
                 it.finish()

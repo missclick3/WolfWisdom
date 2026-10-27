@@ -166,7 +166,7 @@ private fun ConfigurationContent(state: WidgetConfigUi, back: () -> Unit, select
                 Text(stringResource(R.string.widget_configuration_title), fontFamily = Tinos, fontWeight = FontWeight.Normal, fontSize = 24.sp)
             }
             Spacer(Modifier.height(68.dp))
-            Text(stringResource(R.string.widget_preview, when (state.width) { 248f -> "3×2"; 336f -> "4×2"; else -> "2×2" }),
+            Text(stringResource(R.string.widget_preview),
                 style = WolfTypography.Caption, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.CenterHorizontally))
             Spacer(Modifier.height(16.dp))
