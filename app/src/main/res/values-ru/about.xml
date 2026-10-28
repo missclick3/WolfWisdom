@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="about_version">Версия %1$s</string>
+    <string name="about_quote">«Иногда одна волчья мудрость говорит больше, чем тысяча человеческих слов»</string>
+    <string name="about_description">Небольшая коллекция ироничных, абсурдных и неожиданных цитат. Листай, сохраняй понравившиеся и делись ими с друзьями.</string>
+    <string name="about_licenses">Лицензии</string>
+    <string name="about_privacy">Политика конфиденциальности</string>
+    <string name="about_terms">Условия использования</string>
+    <string name="legal_updated">Редакция от 28 октября 2026 года</string>
+    <string name="legal_contact">Написать разработчику</string>
+    <string name="legal_load_error">Не удалось открыть документ.</string>
+    <string name="legal_retry">Повторить</string>
+    <string name="legal_russian_note">Юридические документы представлены на русском языке.</string>
+</resources>

@@ -19,6 +19,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ru.missclick.wolfwisdom.BuildConfig
+import ru.missclick.wolfwisdom.presentation.about.AboutRoot
+import ru.missclick.wolfwisdom.presentation.about.LegalDocumentRoot
 import ru.missclick.wolfwisdom.presentation.contacts.ContactsRoot
 import ru.missclick.wolfwisdom.presentation.main.MainRoot
 import ru.missclick.wolfwisdom.presentation.saved.SavedRoot
@@ -78,6 +80,11 @@ fun WolfNavHost(
                         navController.navigateFrom(entry) {
                             navigate(Screen.Contacts) { launchSingleTop = true }
                         }
+                    },
+                    onNavigateToAbout = {
+                        navController.navigateFrom(entry) {
+                            navigate(Screen.About) { launchSingleTop = true }
+                        }
                     }
                 )
             }
@@ -98,6 +105,22 @@ fun WolfNavHost(
             }
             composable<Screen.Contacts> { entry ->
                 ContactsRoot(onBackClick = { navController.popBackStackFrom(entry) })
+            }
+            composable<Screen.About> { entry ->
+                AboutRoot(
+                    onBackClick = { navController.popBackStackFrom(entry) },
+                    onDocumentClick = { document ->
+                        navController.navigateFrom(entry) {
+                            navigate(Screen.LegalDocument(document)) { launchSingleTop = true }
+                        }
+                    }
+                )
+            }
+            composable<Screen.LegalDocument> { entry ->
+                LegalDocumentRoot(
+                    document = entry.toRoute<Screen.LegalDocument>().document,
+                    onBackClick = { navController.popBackStackFrom(entry) }
+                )
             }
             composable<Screen.Error> { entry ->
                 val source = entry.toRoute<Screen.Error>().source

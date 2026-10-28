@@ -86,14 +86,17 @@ IDs are not included. Click events represent intent, not completed operations.
 | `error_retry_clicked` | `error_source=main/saved` |
 
 `screen_opened` on `error` also includes `error_source`. Implemented screens are
-`main`, `saved`, `settings`, `contacts`, `error`, `widget_configuration`.
+`main`, `saved`, `settings`, `contacts`, `about`, `licenses`, `privacy_policy`,
+`terms`, `error`, `widget_configuration`.
 `widget_placement` is an overlay and uses its own opened event.
-
-## Prepared for future UI
 
 `AboutAnalytics` and `AboutDocumentAnalytics` define `about`, `licenses`,
 `privacy_policy`, `terms` visits and `about_document_clicked(document=...)`.
-These screens are not implemented, so these events are not emitted yet.
+These events are connected to the About/document routes. Document contents,
+selection and scrolling are not tracked; all events use the existing consent gate.
+
+## Prepared for future UI
+
 `SavedAnalytics.searchClearClicked()` defines `search_clear_clicked`; there is
 currently no separate clear-search button. Clearing text by typing is not a click.
 Outside taps, system Back and selecting a menu item do not emit

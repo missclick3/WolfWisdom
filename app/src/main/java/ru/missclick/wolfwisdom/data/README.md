@@ -51,8 +51,8 @@ Calling next/previous on an uninitialized feed returns its first random quote.
 
 ## Seed and persistence
 
-The bundled `assets/quotes/volchi_citaty_renumbered.txt` contains all 724 supplied
-quotes. Number prefixes are stripped during initialization; Room generates IDs.
+The bundled `assets/quotes/volchi_citaty_renumbered.txt` contains 717 quotes after
+removing seven unsuitable entries. Number prefixes are stripped during initialization; Room generates IDs.
 The source is validated for sequential numbering, nonempty contents and unique
 quote text. Every new quote starts with `isSaved = false`, including a SQL default.
 
@@ -63,6 +63,12 @@ later does not update existing databases; future seed updates need an explicit
 data migration. Schemas are exported under `app/schemas`. Migration 1 to 2 adds
 nullable `savedAt`, preserving all existing quotes, saved flags, and reading history.
 Historical save dates remain unknown rather than being fabricated.
+
+Migration 3 to 4 removes the seven withdrawn quotes by exact text, including their
+history and cycle entries. An affected cursor moves to the closest surviving
+earlier history entry, or the next entry if there is no earlier one. All other
+quote IDs, saved flags, timestamps and history entries remain unchanged. Widgets
+bound to removed quotes use the existing unavailable-quote fallback on refresh.
 
 ## Reading sequence
 

@@ -44,6 +44,38 @@ class SavedQuotesDatabaseTest {
     @Test
     fun migration2_preservesSavedQuotesAndReadingHistory() = runBlocking { verifyMigration(2) }
 
+    @Test
+    fun migration3_preservesOtherSavedQuotesAndReadingHistory() = runBlocking { verifyMigration(3) }
+
+    @Test
+    fun withdrawnQuotesAreRemovedWithoutBreakingForeignKeysOrOtherSaves() = runBlocking {
+        val db = inMemoryDatabase()
+        val sql = db.openHelper.writableDatabase
+        sql.execSQL("INSERT INTO quotes (id, quote, isSaved, savedAt) VALUES (100, 'Keep saved', 1, 123), (200, 'Keep next', 0, NULL)")
+        // Deliberately different IDs from the original seed: deletion must match text.
+        sql.execSQL("INSERT INTO quotes (id, quote, isSaved) VALUES (901, ?, 1), (902, ?, 0)", arrayOf(
+            "Лучше светлое пиво, чем тёмное будущее.", "Если не спится ночью, попробуй спиться днём."
+        ))
+        sql.execSQL("INSERT INTO quote_history (id, quoteId) VALUES (1, 100), (2, 901), (3, 902), (4, 200)")
+        sql.execSQL("INSERT INTO quote_reading_state (id, currentHistoryId) VALUES (1, 3)")
+        sql.execSQL("INSERT INTO quote_cycle (quoteId) VALUES (100), (901), (902)")
+        db.runInTransaction { WolfWisdomDatabase.MIGRATION_3_4.migrate(sql) }
+
+        assertNull(db.quoteDao().getById(901))
+        assertNull(db.quoteDao().getById(902))
+        assertEquals(listOf(QuoteDto(100, "Keep saved", true, 123)), db.quoteDao().observeSaved().first())
+        assertEquals(1L, db.quoteNavigationDao().getReadingState()?.currentHistoryId)
+        assertNull(db.quoteNavigationDao().getHistoryEntry(2))
+        assertNull(db.quoteNavigationDao().getHistoryEntry(3))
+        assertEquals(200L, db.quoteNavigationDao().getHistoryEntry(4)?.quoteId)
+        sql.query("PRAGMA foreign_key_check").use { assertFalse(it.moveToFirst()) }
+        sql.query("SELECT quoteId FROM quote_cycle").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(100L, it.getLong(0))
+            assertFalse(it.moveToNext())
+        }
+    }
+
     private suspend fun verifyMigration(fromVersion: Int) {
         val schema = InstrumentationRegistry.getInstrumentation().context.assets
             .open("ru.missclick.wolfwisdom.data.local.WolfWisdomDatabase/$fromVersion.json")
@@ -74,7 +106,7 @@ class SavedQuotesDatabaseTest {
         }
 
         val migrated = Room.databaseBuilder(context, WolfWisdomDatabase::class.java, migrationDatabaseName)
-            .addMigrations(WolfWisdomDatabase.MIGRATION_1_2, WolfWisdomDatabase.MIGRATION_2_3)
+            .addMigrations(WolfWisdomDatabase.MIGRATION_1_2, WolfWisdomDatabase.MIGRATION_2_3, WolfWisdomDatabase.MIGRATION_3_4)
             .build().also { database = it }
 
         val saved = migrated.quoteDao().observeSaved().first()
@@ -86,7 +118,7 @@ class SavedQuotesDatabaseTest {
             assertTrue(it.moveToFirst())
             assertEquals(1, it.getInt(0))
         }
-        assertEquals(3, migrated.openHelper.readableDatabase.version)
+        assertEquals(4, migrated.openHelper.readableDatabase.version)
         assertFalse(requireNotNull(migrated.quoteDao().getById(1)).isOnWidget)
     }
 

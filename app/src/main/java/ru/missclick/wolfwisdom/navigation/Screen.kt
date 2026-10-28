@@ -20,5 +20,11 @@ sealed interface Screen {
     data object Contacts : Screen
 
     @Serializable
+    data object About : Screen
+
+    @Serializable
+    data class LegalDocument(val document: ru.missclick.wolfwisdom.presentation.about.AboutDocument) : Screen
+
+    @Serializable
     data class Error(val source: LoadErrorSource) : Screen
 }

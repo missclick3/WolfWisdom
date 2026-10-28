@@ -12,6 +12,8 @@ import androidx.navigation.toRoute
 import ru.missclick.wolfwisdom.analytics.LocalAnalyticsTracker
 import ru.missclick.wolfwisdom.analytics.screenVisitSource
 import ru.missclick.wolfwisdom.presentation.contacts.ContactsAnalytics
+import ru.missclick.wolfwisdom.presentation.about.AboutAnalytics
+import ru.missclick.wolfwisdom.presentation.about.AboutDocumentAnalytics
 import ru.missclick.wolfwisdom.presentation.error.ErrorAnalytics
 import ru.missclick.wolfwisdom.presentation.main.MainAnalytics
 import ru.missclick.wolfwisdom.presentation.saved.SavedAnalytics
@@ -29,6 +31,8 @@ internal fun NavigationAnalytics(navController: NavHostController) {
                 entry.destination.hasRoute<Screen.Saved>() -> SavedAnalytics(tracker)
                 entry.destination.hasRoute<Screen.Settings>() -> SettingsAnalytics(tracker)
                 entry.destination.hasRoute<Screen.Contacts>() -> ContactsAnalytics(tracker)
+                entry.destination.hasRoute<Screen.About>() -> AboutAnalytics(tracker)
+                entry.destination.hasRoute<Screen.LegalDocument>() -> AboutDocumentAnalytics(tracker, entry.toRoute<Screen.LegalDocument>().document)
                 entry.destination.hasRoute<Screen.Error>() -> ErrorAnalytics(tracker, entry.toRoute<Screen.Error>().source)
                 else -> return@collect
             }

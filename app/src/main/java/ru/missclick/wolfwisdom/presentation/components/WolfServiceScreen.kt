@@ -24,6 +24,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntSize
@@ -47,6 +51,7 @@ internal fun WolfServiceScreen(
     title: String,
     onBackClick: () -> Unit,
     device: DeviceConfiguration = currentDeviceConfiguration(),
+    expandTitle: Boolean = false,
     content: @Composable (WolfGlassBackdrop) -> Unit
 ) {
     val tablet = !device.isMobile
@@ -64,24 +69,32 @@ internal fun WolfServiceScreen(
     ))
     var screenSize by remember { mutableStateOf(IntSize.Zero) }
     var screenOrigin by remember { mutableStateOf(Offset.Zero) }
+    val titleStyle = WolfTypography.Title.copy(
+        fontSize = if (tablet) 28.sp else 22.sp,
+        lineHeight = if (tablet) 39.sp else 31.sp
+    )
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
 
     WolfWisdomScreen {
-        Box(Modifier.fillMaxSize().onGloballyPositioned {
+        BoxWithConstraints(Modifier.fillMaxSize().onGloballyPositioned {
             screenSize = it.size
             screenOrigin = it.positionInRoot()
         }.background(contrast).safeDrawingPadding()) {
-            Box(Modifier.fillMaxSize().padding(top = 60.dp)) {
+            val headerHeight = if (expandTitle) {
+                val textHeight = textMeasurer.measure(AnnotatedString(title), titleStyle,
+                    constraints = Constraints(maxWidth = with(density) { (maxWidth - 144.dp).roundToPx().coerceAtLeast(1) })).size.height
+                maxOf(60.dp, with(density) { textHeight.toDp() } + 16.dp)
+            } else 60.dp
+            Box(Modifier.fillMaxSize().padding(top = headerHeight)) {
                 content(WolfGlassBackdrop(background, screenSize, screenOrigin, contrast))
             }
-            Box(Modifier.fillMaxWidth().height(60.dp)) {
+            Box(Modifier.fillMaxWidth().height(headerHeight)) {
                 Text(
                     title,
                     modifier = Modifier.align(Alignment.Center).padding(horizontal = 72.dp),
                     color = WolfColors.Text,
-                    style = WolfTypography.Title.copy(
-                        fontSize = if (tablet) 28.sp else 22.sp,
-                        lineHeight = if (tablet) 39.sp else 31.sp
-                    ),
+                    style = titleStyle,
                     textAlign = TextAlign.Center
                 )
                 WolfIconButton(
