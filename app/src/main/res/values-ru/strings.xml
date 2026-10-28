@@ -27,7 +27,6 @@
     <string name="search_nothing_found_desc">Попробуй другое слово\nили очисти поиск.</string>
     <string name="empty_saved_title">Здесь будет твоя мудрость</string>
     <string name="empty_saved_description">Нажми на сердце у цитаты,\nчтобы сохранить её.</string>
-    <string name="quote_is_set_to_widget">Цитата закреплена на виджете</string>
     <string name="navigate_back">Назад</string>
     <string name="open_saved_search">Открыть поиск</string>
     <string name="close_saved_search">Закрыть поиск</string>
@@ -46,7 +45,6 @@
     <string name="contacts_app_unavailable">Нет приложения для открытия контакта</string>
     <string name="contacts_news_description">Новости, обновления и поддержка проекта</string>
     <string name="contacts_message_description">Для связи и предложений</string>
-    <string name="loading_quote">Загружаем цитату</string>
     <string name="error_brand_title">Волчья мудрость</string>
     <string name="error_load_label">НЕ УДАЛОСЬ ЗАГРУЗИТЬ</string>
     <string name="error_title">Что-то пошло не так</string>
