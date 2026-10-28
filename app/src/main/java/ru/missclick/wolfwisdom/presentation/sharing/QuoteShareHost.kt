@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.text.TextUtils
 import ru.missclick.wolfwisdom.logging.AppLog
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +39,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.missclick.wolfwisdom.BuildConfig
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.presentation.components.QuoteLandscapeCard
 import ru.missclick.wolfwisdom.presentation.components.WolfSnackbarHost
@@ -157,9 +159,19 @@ internal suspend fun createQuoteShareIntent(context: Context, image: ImageBitmap
                 check(image.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it))
             }
             val uri = FileProvider.getUriForFile(context, "${context.packageName}.quote_shares", file)
+            val appUrl = "https://www.rustore.ru/catalog/app/${BuildConfig.APPLICATION_ID}"
+            val appName = context.getString(R.string.app_name)
+            val caption = context.getString(R.string.quote_share_caption, appName)
+            val htmlCaption = context.getString(
+                R.string.quote_share_caption,
+                "<a href=\"$appUrl\">${TextUtils.htmlEncode(appName)}</a>"
+            )
             Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, uri)
+                // Recipients choose whether to preserve HTML. Keep the URL in the plain fallback.
+                putExtra(Intent.EXTRA_TEXT, "$caption\n$appUrl")
+                putExtra(Intent.EXTRA_HTML_TEXT, htmlCaption)
                 clipData = ClipData.newUri(context.contentResolver, context.getString(R.string.share), uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
