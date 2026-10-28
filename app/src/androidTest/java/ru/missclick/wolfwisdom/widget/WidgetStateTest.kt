@@ -10,6 +10,26 @@ import org.junit.runner.RunWith
 class WidgetStateTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
+    @Test fun restore_redeliveredJob_preservesOverlappingBindings() {
+        val store = WidgetStateStore(context)
+        val token = java.util.UUID.randomUUID().toString()
+        val first = WidgetState(45, WidgetTheme.LIGHT)
+        val second = WidgetState(61, WidgetTheme.ANDROID)
+        try {
+            assertTrue(store.write(90111, first))
+            assertTrue(store.write(90112, second))
+            repeat(2) {
+                WidgetStateStore(context).restore(intArrayOf(90111, 90112), intArrayOf(90112, 90113), token)
+            }
+            assertNull(store.read(90111))
+            assertEquals(first, store.read(90112))
+            assertEquals(second, store.read(90113))
+        } finally {
+            (90111..90113).forEach(store::delete)
+            context.getSharedPreferences("favorite_widgets", 0).edit().remove("last_restore").commit()
+        }
+    }
+
     @Test fun instances_persistIndependentlyAndRestoreWithoutLosingOverlappingIds() {
         val store = WidgetStateStore(context)
         val first = WidgetState(45, WidgetTheme.LIGHT)

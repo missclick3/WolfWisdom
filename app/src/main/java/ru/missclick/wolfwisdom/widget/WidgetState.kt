@@ -34,7 +34,10 @@ class WidgetStateStore(context: Context) {
         if (prefs.edit().remove("instance.$id").commit()) WidgetUpdates.changed()
     }
 
-    fun restore(oldIds: IntArray, newIds: IntArray) {
+    fun restore(oldIds: IntArray, newIds: IntArray, token: String? = null) {
+        // JobScheduler can redeliver interrupted work after the metadata commit.
+        // Keep overlapping ID remaps idempotent in the same preference transaction.
+        if (token != null && prefs.getString("last_restore", null) == token) return
         // Snapshot first: restored IDs can overlap IDs from the old host.
         val states = oldIds.map(::read)
         val editor = prefs.edit()
@@ -42,7 +45,9 @@ class WidgetStateStore(context: Context) {
         oldIds.zip(newIds).forEachIndexed { index, (_, new) ->
             states[index]?.let { editor.putString("instance.$new", encode(it)) }
         }
-        if (editor.commit()) WidgetUpdates.changed()
+        if (token != null) editor.putString("last_restore", token)
+        if (!editor.commit()) throw java.io.IOException("Widget restore commit failed")
+        WidgetUpdates.changed()
     }
 
     companion object {

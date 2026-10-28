@@ -23,35 +23,20 @@ open class FavoriteWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) = dispatch(context, ids)
     override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, id: Int, options: Bundle) = dispatch(context, intArrayOf(id))
     override fun onDeleted(context: Context, ids: IntArray) {
-        val pending = goAsync()
-        WidgetUpdates.scope.launch {
-            try {
-                WidgetUpdates.mutex.withLock { ids.forEach { WidgetStateStore(context).delete(it) } }
-                WidgetUpdates.synchronizeQuotes(context)
-                WidgetRenderer.clearCache()
-            } finally { pending.finish() }
-        }
+        WidgetWorkService.enqueue(context, Intent(WidgetWorkService.DELETE).putExtra(WidgetWorkService.IDS, ids))
     }
     override fun onRestored(context: Context, oldWidgetIds: IntArray, newWidgetIds: IntArray) {
-        val pending = goAsync()
-        WidgetUpdates.scope.launch {
-            try {
-                WidgetUpdates.mutex.withLock { WidgetStateStore(context).restore(oldWidgetIds, newWidgetIds) }
-                newWidgetIds.forEach { id ->
-                    if (WidgetUpdates.update(context, id)) AppWidgetManager.getInstance(context)
-                        .updateAppWidgetOptions(id, Bundle().apply {
-                            putBoolean(AppWidgetManager.OPTION_APPWIDGET_RESTORE_COMPLETED, true)
-                        })
-                }
-            } finally { pending.finish() }
-        }
+        WidgetWorkService.enqueue(context, Intent(WidgetWorkService.RESTORE)
+            .putExtra(WidgetWorkService.OLD_IDS, oldWidgetIds)
+            .putExtra(WidgetWorkService.IDS, newWidgetIds)
+            .putExtra(WidgetWorkService.TOKEN, java.util.UUID.randomUUID().toString()))
     }
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == AppWidgetManager.ACTION_APPWIDGET_RESTORED) {
             val oldIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_OLD_IDS) ?: return
             val newIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS) ?: return
             // The base receiver invokes both onRestored and onUpdate for this single broadcast.
-            // Our restore already updates, so keep exactly one goAsync/PendingResult owner.
+            // Restore work includes the update; enqueue this broadcast only once.
             onRestored(context, oldIds, newIds)
             return
         }
@@ -64,18 +49,13 @@ open class FavoriteWidgetProvider : AppWidgetProvider() {
                 if (intent.hasExtra("budget_bytes")) edit.putLong("budget_bytes", intent.getLongExtra("budget_bytes", Long.MAX_VALUE))
                 edit.commit()
             }
-            dispatch(context, WidgetUpdates.ids(context))
+            dispatch(context, null)
         }
     }
-    private fun dispatch(context: Context, ids: IntArray) {
-        val pending = goAsync()
-        WidgetUpdates.scope.launch {
-            try {
-                ids.forEach { WidgetUpdates.update(context.applicationContext, it) }
-                WidgetUpdates.synchronizeQuotes(context)
-            }
-            finally { pending.finish() }
-        }
+    private fun dispatch(context: Context, ids: IntArray?) {
+        WidgetWorkService.enqueue(context, Intent(WidgetWorkService.UPDATE).apply {
+            if (ids != null) putExtra(WidgetWorkService.IDS, ids)
+        })
     }
 }
 
@@ -84,7 +64,10 @@ class FavoriteWidget3 : FavoriteWidgetProvider()
 class FavoriteWidget4 : FavoriteWidgetProvider()
 
 object WidgetUpdates {
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, error ->
+        if (error is Exception) AppLog.e("FavoriteWidget", "Unexpected widget failure", error)
+        else throw error
+    })
     val mutex = Mutex()
     private val changes = Channel<Unit>(Channel.CONFLATED)
     val providers = listOf(FavoriteWidget2::class.java, FavoriteWidget3::class.java, FavoriteWidget4::class.java)
@@ -124,14 +107,12 @@ object WidgetUpdates {
         }
         scope.launch {
             for (ignored in changes) {
-                try {
-                    synchronizeQuotes(application)
-                    ids(application).forEach { update(application, it) }
-                } catch (cancelled: CancellationException) { throw cancelled
-                } catch (error: java.io.IOException) {
-                    AppLog.e("FavoriteWidget", "Widget synchronization failed", error)
-                } catch (error: android.database.sqlite.SQLiteException) {
-                    AppLog.e("FavoriteWidget", "Widget synchronization failed", error)
+                widgetOperation { synchronizeQuotes(application) }
+                widgetOperation {
+                    ids(application).forEach { id ->
+                        currentCoroutineContext().ensureActive()
+                        update(application, id)
+                    }
                 }
             }
         }
@@ -166,7 +147,13 @@ object WidgetUpdates {
             WidgetDimensions(maxW.coerceIn(48f, 1024f), minH.coerceIn(48f, 1024f))).distinct()
     }
 
-    suspend fun update(context: Context, id: Int): Boolean = mutex.withLock {
+    suspend fun update(context: Context, id: Int): Boolean {
+        var updated = false
+        widgetOperation { updated = updateLocked(context, id) }
+        return updated
+    }
+
+    private suspend fun updateLocked(context: Context, id: Int): Boolean = mutex.withLock {
         val manager = AppWidgetManager.getInstance(context)
         if (manager.getAppWidgetInfo(id) == null) return@withLock false
         var state = WidgetStateStore(context).read(id) ?: return@withLock false // Never commit canceled drafts.

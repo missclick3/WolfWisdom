@@ -296,17 +296,8 @@ class WidgetPinReceiver : BroadcastReceiver() {
         val token = intent.data?.lastPathSegment ?: return
         val id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
         if (id < 0 || AppWidgetManager.getInstance(context).getAppWidgetInfo(id)?.provider != ComponentName(context, FavoriteWidget2::class.java)) return
-        val pending = goAsync()
-        WidgetUpdates.scope.launch {
-            try {
-                val prefs = context.getSharedPreferences("widget_pin_requests", 0)
-                val fields = prefs.getString(token, null)?.split('|') ?: return@launch
-                val theme = WidgetTheme.entries.find { it.name == fields.getOrNull(1) } ?: return@launch
-                if (WidgetStateStore(context).write(id, WidgetState(fields[0].toLongOrNull()?.takeIf { it > 0 }, theme))) {
-                    prefs.edit().remove(token).remove("time.$token").commit()
-                    WidgetUpdates.update(context, id)
-                }
-            } finally { pending.finish() }
-        }
+        WidgetWorkService.enqueue(context, Intent(WidgetWorkService.PIN)
+            .putExtra(WidgetWorkService.TOKEN, token)
+            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
     }
 }
