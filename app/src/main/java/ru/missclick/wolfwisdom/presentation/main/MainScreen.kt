@@ -156,6 +156,10 @@ fun MainScreen(
     snackbarHost: @Composable () -> Unit = {},
 ) {
     val swipeState = rememberQuoteSwipeState()
+    val portraitScrollState = rememberScrollState()
+    LaunchedEffect(state.quoteId, state.quote) {
+        portraitScrollState.scrollTo(0)
+    }
     val deviceConfiguration = currentDeviceConfiguration()
     var headerBrandTopInWindowPx by remember { mutableStateOf<Float?>(null) }
     val onBrandPositioned: (LayoutCoordinates) -> Unit = {
@@ -199,32 +203,43 @@ fun MainScreen(
                         onBrandPositioned = onBrandPositioned,
                         onOptionsClick = { onAction(MainAction.ToggleOptions) }
                     )
-                    Column(
+                    BoxWithConstraints(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
                             .padding(
                                 horizontal = WolfSpacing.Space20,
                                 vertical = WolfSpacing.Space32
-                            ),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (!state.showLoading && state.quote.isNotEmpty()) {
-                            FlippingQuoteCard(
-                                quote = state.quote,
-                                isSaved = state.isQuoteSaved,
-                                isOnWidget = state.isQuoteOnWidget,
-                                swipeState = swipeState,
-                                transition = state.quoteTransition,
-                                enabled = !state.isNavigating && !state.isSavingQuote,
-                                onSwipeUp = { onAction(MainAction.SwipeUp) },
-                                onSwipeDown = { onAction(MainAction.SwipeDown) },
-                                onAnimationFinished = { onAction(MainAction.QuoteAnimationFinished(it)) },
-                                onSaveClick = { onAction(MainAction.ToggleQuoteSaved) },
-                                onShareClick = { onAction(MainAction.ShareClick) },
-                                onWidgetClick = { onAction(MainAction.WidgetClick) }
                             )
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                                // Overflow scrolls before the screen's quote gesture;
+                                // fitting cards retain their centered position and flip.
+                                .verticalScroll(
+                                    state = portraitScrollState,
+                                    enabled = portraitScrollState.maxValue > 0
+                                )
+                                .heightIn(min = maxHeight),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            if (!state.showLoading && state.quote.isNotEmpty()) {
+                                FlippingQuoteCard(
+                                    quote = state.quote,
+                                    isSaved = state.isQuoteSaved,
+                                    isOnWidget = state.isQuoteOnWidget,
+                                    swipeState = swipeState,
+                                    transition = state.quoteTransition,
+                                    enabled = !state.isNavigating && !state.isSavingQuote,
+                                    onSwipeUp = { onAction(MainAction.SwipeUp) },
+                                    onSwipeDown = { onAction(MainAction.SwipeDown) },
+                                    onAnimationFinished = { onAction(MainAction.QuoteAnimationFinished(it)) },
+                                    onSaveClick = { onAction(MainAction.ToggleQuoteSaved) },
+                                    onShareClick = { onAction(MainAction.ShareClick) },
+                                    onWidgetClick = { onAction(MainAction.WidgetClick) }
+                                )
+                            }
                         }
                     }
                     SwipeUpHint(
