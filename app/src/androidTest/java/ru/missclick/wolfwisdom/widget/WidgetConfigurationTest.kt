@@ -80,6 +80,66 @@ class WidgetConfigurationTest {
         }
     }
 
+    @Test fun configuration_corruptPreferences_showsErrorAndRetryLoadsQuote() {
+        val id = allocate()
+        val preferences = context.getSharedPreferences("favorite_widgets", 0)
+        // A wrong stored type throws ClassCastException, rather than IOException.
+        assertTrue(preferences.edit().putLong("instance.$id", 1L).commit())
+        ActivityScenario.launchActivityForResult<WidgetConfigurationActivity>(intent(id)).use { scenario ->
+            ready(scenario)
+            scenario.onActivity {
+                val state = ViewModelProvider(it)[WidgetConfigViewModel::class.java].state.value
+                assertEquals(ru.missclick.wolfwisdom.R.string.widget_load_error, state.error)
+                assertFalse(state.submitting)
+                assertNull(state.quote)
+            }
+
+            assertTrue(preferences.edit().remove("instance.$id").commit())
+            scenario.onActivity { ViewModelProvider(it)[WidgetConfigViewModel::class.java].retry() }
+            ready(scenario)
+
+            scenario.onActivity {
+                val state = ViewModelProvider(it)[WidgetConfigViewModel::class.java].state.value
+                assertNull(state.error)
+                assertEquals(quoteId, state.quote?.id)
+                assertTrue(state.quote!!.hasQuote)
+            }
+        }
+    }
+
+    @Test fun replacement_corruptPreferences_preservesSelectionAndAllowsRetry(): Unit = runBlocking {
+        val id = allocate()
+        val original = WidgetState(quoteId + 1, WidgetTheme.LIGHT)
+        WidgetStateStore(context).write(id, original)
+        val store = androidx.lifecycle.ViewModelStore()
+        lateinit var model: WidgetPlacementViewModel
+        try {
+            instrumentation.runOnMainSync {
+                model = WidgetPlacementViewModel(context.applicationContext as android.app.Application,
+                    androidx.lifecycle.SavedStateHandle())
+                store.put("replacement-failure-test", model)
+                model.open(quoteId)
+            }
+            compose.waitUntil(15_000) { !model.state.value.loading }
+            instrumentation.runOnMainSync { model.select(id) }
+            assertTrue(context.getSharedPreferences("favorite_widgets", 0).edit().putLong("instance.$id", 1L).commit())
+
+            instrumentation.runOnMainSync { model.replace() }
+            compose.waitUntil(15_000) { !model.state.value.submitting }
+            assertEquals(ru.missclick.wolfwisdom.R.string.widget_replace_error, model.state.value.error)
+            assertEquals(id, model.state.value.selectedId)
+            assertEquals(quoteId, model.state.value.quote?.id)
+            assertFalse(model.state.value.complete)
+
+            WidgetStateStore(context).write(id, original)
+            instrumentation.runOnMainSync { model.replace() }
+            compose.waitUntil(15_000) { !model.state.value.submitting }
+            assertTrue(model.state.value.complete)
+            assertNull(model.state.value.error)
+            assertEquals(WidgetState(quoteId, WidgetTheme.LIGHT), WidgetStateStore(context).read(id))
+        } finally { instrumentation.runOnMainSync { store.clear() } }
+    }
+
     @Test fun canceledDraft_doesNotCreateInstance() {
         val id = allocate()
         ActivityScenario.launchActivityForResult<WidgetConfigurationActivity>(intent(id)).use { scenario ->

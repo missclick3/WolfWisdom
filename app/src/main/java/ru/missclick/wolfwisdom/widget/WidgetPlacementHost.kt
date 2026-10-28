@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.withLock
 import ru.missclick.wolfwisdom.R
+import ru.missclick.wolfwisdom.logging.AppLog
 import ru.missclick.wolfwisdom.ui.theme.*
 
 data class WidgetPlacementEntry(val id: Int, val state: WidgetState, val quote: WidgetQuote)
@@ -118,7 +119,8 @@ class WidgetPlacementViewModel(application: Application, private val saved: Save
                     selectedId = selected, loading = false, error = null,
                     create = loaded.second.isEmpty() && loaded.first.hasQuote)
             } catch (cancelled: CancellationException) { throw cancelled
-            } catch (_: java.io.IOException) {
+            } catch (error: Exception) {
+                AppLog.e("FavoriteWidget", "Widget placement loading failed", error)
                 _state.value = _state.value.copy(loading = false, error = R.string.widget_load_error)
             }
         }
@@ -128,6 +130,10 @@ class WidgetPlacementViewModel(application: Application, private val saved: Save
         if (_state.value.submitting || _state.value.widgets.none { it.id == id }) return
         saved["selected_widget"] = id
         _state.value = _state.value.copy(selectedId = id, error = null)
+    }
+
+    fun creationFailed() {
+        _state.value = _state.value.copy(create = false, loading = false, error = R.string.widget_create_error)
     }
 
     fun replace() {
@@ -145,8 +151,11 @@ class WidgetPlacementViewModel(application: Application, private val saved: Save
                     selectedId = id.takeIf { selected -> remaining.any { it.id == selected } },
                     error = if (success) null else R.string.widget_replace_error)
             } catch (cancelled: CancellationException) { throw cancelled
-            } catch (_: java.io.IOException) {
-                _state.value = _state.value.copy(submitting = false, error = R.string.widget_replace_error)
+            } catch (error: Exception) {
+                AppLog.e("FavoriteWidget", "Widget replacement failed", error)
+                _state.value = _state.value.copy(error = R.string.widget_replace_error)
+            } finally {
+                _state.value = _state.value.copy(submitting = false)
             }
         }
     }
@@ -170,8 +179,8 @@ internal fun WidgetPlacementHost(model: WidgetPlacementViewModel) {
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { model.refresh() }
     LaunchedEffect(state.complete, state.create) {
         if (state.create) {
-            WidgetPin.openCreation(context, state.quote?.id)
-            model.dismiss()
+            if (WidgetPin.openCreation(context, state.quote?.id)) model.dismiss()
+            else model.creationFailed()
         } else if (state.complete) model.dismiss()
     }
     if (state.active) {
@@ -180,8 +189,8 @@ internal fun WidgetPlacementHost(model: WidgetPlacementViewModel) {
         if (state.loading && state.widgets.isEmpty()) return
         WidgetPlacementContent(state, model::dismiss, {
             analytics.createClicked()
-            WidgetPin.openCreation(context, state.quote?.id)
-            model.dismiss()
+            if (WidgetPin.openCreation(context, state.quote?.id)) model.dismiss()
+            else model.creationFailed()
         },
             { id -> analytics.targetClicked(); model.select(id) },
             { analytics.replaceClicked(); model.replace() },

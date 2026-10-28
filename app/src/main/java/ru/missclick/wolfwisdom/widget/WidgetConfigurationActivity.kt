@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import ru.missclick.wolfwisdom.R
+import ru.missclick.wolfwisdom.logging.AppLog
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -56,8 +57,16 @@ class WidgetConfigurationActivity : AppCompatActivity() {
         val manager = AppWidgetManager.getInstance(this)
         val id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
         val pin = intent.getBooleanExtra("request_pin", false)
-        if ((!pin && (id == AppWidgetManager.INVALID_APPWIDGET_ID || manager.getAppWidgetInfo(id)?.provider?.className.orEmpty() !in
-                    WidgetUpdates.providers.map { it.name })) || (pin && !manager.isRequestPinAppWidgetSupported)) {
+        val valid = try {
+            if (pin) manager.isRequestPinAppWidgetSupported else
+                id != AppWidgetManager.INVALID_APPWIDGET_ID && manager.getAppWidgetInfo(id)?.provider?.className.orEmpty() in
+                    WidgetUpdates.providers.map { it.name }
+        } catch (error: Exception) {
+            AppLog.e("FavoriteWidget", "Widget host validation failed", error)
+            Toast.makeText(this, R.string.widget_load_error, Toast.LENGTH_LONG).show()
+            false
+        }
+        if (!valid) {
             finish(); return
         }
         val model = ViewModelProvider(this)[WidgetConfigViewModel::class.java]
@@ -111,19 +120,25 @@ class WidgetConfigViewModel(application: Application, private val saved: SavedSt
         if (initialized) {
             // Activity recreation after a language change retains this ViewModel.
             if (_state.value.quote != null) viewModelScope.launch {
-                val draft = _state.value
-                val localizedQuote = withContext(Dispatchers.IO) {
-                    loadWidgetQuote(getApplication(), WidgetState(draft.quoteId, draft.theme))
+                widgetOperation(onFailure = { error ->
+                    AppLog.e("FavoriteWidget", "Widget localization failed", error)
+                    _state.value = _state.value.copy(error = R.string.widget_load_error)
+                }) {
+                    val draft = _state.value
+                    val localizedQuote = withContext(Dispatchers.IO) {
+                        loadWidgetQuote(getApplication(), WidgetState(draft.quoteId, draft.theme))
+                    }
+                    _state.value = _state.value.copy(quote = localizedQuote)
                 }
-                _state.value = _state.value.copy(quote = localizedQuote)
             }
             return
         }
         initialized = true
-        _state.value = _state.value.copy(id = id, pin = pin, width = if (pin) 160f else
-            WidgetUpdates.referenceWidth(AppWidgetManager.getInstance(getApplication()), id))
+        _state.value = _state.value.copy(id = id, pin = pin, quoteId = _state.value.quoteId ?: requestedQuote)
         viewModelScope.launch {
             try {
+                _state.value = _state.value.copy(width = if (pin) 160f else
+                    WidgetUpdates.referenceWidth(AppWidgetManager.getInstance(getApplication()), id))
                 val state = withContext(Dispatchers.IO) {
                     val committed = WidgetStateStore(getApplication()).read(id)
                     val initial = if (saved.contains("quote")) WidgetState(saved.get<Long>("quote")?.takeIf { it > 0 })
@@ -135,12 +150,18 @@ class WidgetConfigViewModel(application: Application, private val saved: SavedSt
                 _state.value = _state.value.copy(theme = state.theme, quoteId = state.quoteId,
                     quote = withContext(Dispatchers.IO) { loadWidgetQuote(getApplication(), state) }, loading = false)
             } catch (cancelled: CancellationException) { throw cancelled
-            } catch (_: java.io.IOException) { _state.value = _state.value.copy(loading = false, error = R.string.widget_load_error) }
+            } catch (error: Exception) {
+                AppLog.e("FavoriteWidget", "Widget configuration loading failed", error)
+                _state.value = _state.value.copy(error = R.string.widget_load_error)
+            } finally {
+                _state.value = _state.value.copy(loading = false)
+            }
         }
     }
 
     fun retry() {
         val old = _state.value
+        if (old.loading || old.submitting) return
         initialized = false
         _state.value = old.copy(error = null, loading = true)
         initialize(old.id, old.pin, old.quoteId)
@@ -167,8 +188,11 @@ class WidgetConfigViewModel(application: Application, private val saved: SavedSt
                 _state.value = _state.value.copy(submitting = false, complete = success,
                     error = if (success) null else R.string.widget_create_error)
             } catch (cancelled: CancellationException) { throw cancelled
-            } catch (_: java.io.IOException) {
-                _state.value = _state.value.copy(submitting = false, error = R.string.widget_save_error)
+            } catch (error: Exception) {
+                AppLog.e("FavoriteWidget", "Widget confirmation failed", error)
+                _state.value = _state.value.copy(error = R.string.widget_save_error)
+            } finally {
+                _state.value = _state.value.copy(submitting = false)
             }
         }
     }
@@ -209,7 +233,9 @@ private fun ConfigurationContent(state: WidgetConfigUi, back: () -> Unit, select
             Spacer(Modifier.height(24.dp))
             state.error?.let {
                 Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = WolfTypography.Body)
-                if (state.quote == null) TextButton(onClick = retry) { Text(stringResource(R.string.widget_retry)) }
+                if (!state.loading && !state.submitting) TextButton(onClick = {
+                    if (state.quote == null || it == R.string.widget_load_error) retry() else confirm()
+                }) { Text(stringResource(R.string.widget_retry)) }
             }
             Button(onClick = confirm, enabled = !state.loading && !state.submitting && state.quote != null,
                 shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
@@ -245,28 +271,66 @@ private fun WidgetPreview(state: WidgetConfigUi, width: Float, height: Float) {
     val context = LocalContext.current
     val quote = state.quote
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val view by produceState<RemoteViews?>(null, quote, state.theme, width, height, configuration) {
-        value = if (quote == null) null else withContext(Dispatchers.IO) {
-            WidgetRenderer.render(context, state.id, WidgetState(state.quoteId, state.theme), quote,
-                WidgetDimensions(width, height), WidgetRenderer.budget(context))
+    var attempt by remember(quote, state.theme, width, height, configuration) { mutableIntStateOf(0) }
+    val preview by produceState<WidgetPreviewState>(WidgetPreviewState.Loading,
+        quote, state.id, state.theme, width, height, configuration, attempt) {
+        value = WidgetPreviewState.Loading
+        if (quote != null) {
+            val success = widgetOperation {
+                val rendered = withContext(Dispatchers.IO) {
+                    WidgetRenderer.render(context, state.id, WidgetState(state.quoteId, state.theme), quote,
+                        WidgetDimensions(width, height), WidgetRenderer.budget(context))
+                }
+                value = WidgetPreviewState.Ready(rendered)
+            }
+            if (!success) value = WidgetPreviewState.Failed
         }
     }
-    if (view == null) Box(Modifier.size(width.dp, height.dp), contentAlignment = Alignment.Center) {
+    var applyFailed by remember(preview, attempt) { mutableStateOf(false) }
+    if (preview == WidgetPreviewState.Failed || applyFailed) {
+        Column(Modifier.size(width.dp, height.dp).verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text(stringResource(R.string.widget_preview_error), color = MaterialTheme.colorScheme.error)
+            TextButton(onClick = { attempt++ }) { Text(stringResource(R.string.widget_retry)) }
+        }
+    } else if (preview is WidgetPreviewState.Ready) {
+        val view = (preview as WidgetPreviewState.Ready).view
+        AndroidView(factory = { FrameLayout(it) }, modifier = Modifier.size(width.dp, height.dp), update = { frame ->
+            try {
+                frame.removeAllViews()
+                frame.addView(view.apply(context, frame))
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                AppLog.e("FavoriteWidget", "Widget preview application failed", error)
+                applyFailed = true
+            }
+        })
+    } else Box(Modifier.size(width.dp, height.dp), contentAlignment = Alignment.Center) {
         if (state.loading || quote != null) CircularProgressIndicator()
-    } else AndroidView(factory = { FrameLayout(it) }, modifier = Modifier.size(width.dp, height.dp), update = { frame ->
-        frame.removeAllViews()
-        frame.addView(view!!.apply(context, frame))
-    })
+    }
+}
+
+private sealed interface WidgetPreviewState {
+    data object Loading : WidgetPreviewState
+    data object Failed : WidgetPreviewState
+    data class Ready(val view: RemoteViews) : WidgetPreviewState
 }
 
 object WidgetPin {
-    fun openCreation(context: Context, quoteId: Long?) {
+    fun openCreation(context: Context, quoteId: Long?): Boolean = try {
         if (!AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported) {
             Toast.makeText(context, R.string.widget_pin_unavailable, Toast.LENGTH_LONG).show()
-            return
+            false
+        } else {
+            context.startActivity(Intent(context, WidgetConfigurationActivity::class.java)
+                .putExtra("request_pin", true).putExtra("quote_id", quoteId ?: -1L))
+            true
         }
-        context.startActivity(Intent(context, WidgetConfigurationActivity::class.java)
-            .putExtra("request_pin", true).putExtra("quote_id", quoteId ?: -1L))
+    } catch (error: Exception) {
+        AppLog.e("FavoriteWidget", "Opening widget configuration failed", error)
+        Toast.makeText(context, R.string.widget_create_error, Toast.LENGTH_LONG).show()
+        false
     }
 
     suspend fun request(context: Context, state: WidgetState): Boolean = withContext(Dispatchers.IO) {
