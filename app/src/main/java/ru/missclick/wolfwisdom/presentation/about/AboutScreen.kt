@@ -1,5 +1,6 @@
 package ru.missclick.wolfwisdom.presentation.about
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -33,6 +35,8 @@ import ru.missclick.wolfwisdom.presentation.util.DeviceConfiguration
 import ru.missclick.wolfwisdom.presentation.util.currentDeviceConfiguration
 import ru.missclick.wolfwisdom.ui.theme.*
 
+internal const val PRIVACY_POLICY_URL = "https://missclick3.github.io/wolfwisdom-privacy-policy/"
+
 internal val AboutDocument.title: Int
     get() = when (this) {
         AboutDocument.LICENSES -> R.string.about_licenses
@@ -43,9 +47,22 @@ internal val AboutDocument.title: Int
 @Composable
 fun AboutRoot(onBackClick: () -> Unit, onDocumentClick: (AboutDocument) -> Unit) {
     val analytics = rememberScreenAnalytics(::AboutAnalytics)
+    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
     AboutScreen(
         onBackClick = { analytics.backClicked(); onBackClick() },
-        onDocumentClick = { analytics.documentClicked(it); onDocumentClick(it) }
+        onDocumentClick = { document ->
+            analytics.documentClicked(document)
+            if (document == AboutDocument.PRIVACY_POLICY) {
+                try {
+                    uriHandler.openUri(PRIVACY_POLICY_URL)
+                } catch (_: IllegalArgumentException) {
+                    Toast.makeText(context, R.string.privacy_policy_open_error, Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                onDocumentClick(document)
+            }
+        }
     )
 }
 

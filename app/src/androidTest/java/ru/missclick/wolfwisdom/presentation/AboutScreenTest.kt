@@ -23,8 +23,10 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import ru.missclick.wolfwisdom.R
 import ru.missclick.wolfwisdom.presentation.about.AboutDocument
+import ru.missclick.wolfwisdom.presentation.about.AboutRoot
 import ru.missclick.wolfwisdom.presentation.about.AboutScreen
 import ru.missclick.wolfwisdom.presentation.about.LegalDocumentScreen
+import ru.missclick.wolfwisdom.presentation.about.PRIVACY_POLICY_URL
 import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 
 @RunWith(Parameterized::class)
@@ -34,21 +36,35 @@ class AboutScreenTest(private val width: Int, private val height: Int, private v
     private val labels = listOf("Лицензии", "Политика конфиденциальности", "Условия использования")
 
     @Test
-    fun allDocumentButtonsRemainReachableAndDispatchCorrectDocument() {
+    fun documentButtonsOpenPrivacyInBrowserAndOtherDocumentsInApp() {
         val opened = mutableListOf<AboutDocument>()
+        val openedUrls = mutableListOf<String>()
+        val uriHandler = object : UriHandler {
+            override fun openUri(uri: String) { openedUrls += uri }
+        }
         var backs = 0
-        compose.setContent { Window { AboutScreen({ backs++ }, { opened += it }) } }
+        compose.setContent {
+            Window {
+                CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+                    AboutRoot({ backs++ }, { opened += it })
+                }
+            }
+        }
         screenshot("about")
         labels.forEach { label ->
             compose.onNodeWithText(label).performScrollTo().assertIsDisplayed().performClick()
         }
-        compose.runOnIdle { assertEquals(AboutDocument.entries, opened) }
+        compose.runOnIdle {
+            assertEquals(listOf(AboutDocument.LICENSES, AboutDocument.TERMS), opened)
+            assertEquals(listOf(PRIVACY_POLICY_URL), openedUrls)
+        }
+        compose.onNodeWithText("О приложении").assertIsDisplayed()
         compose.onNodeWithContentDescription("Назад").performClick()
         compose.runOnIdle { assertEquals(1, backs) }
     }
 
     @Test
-    fun documentsLoadOfflineScrollAndReturnToAbout() {
+    fun localDocumentsLoadOfflineScrollAndReturnToAbout() {
         var document by mutableStateOf<AboutDocument?>(null)
         compose.setContent {
             Window {
@@ -57,7 +73,8 @@ class AboutScreenTest(private val width: Int, private val height: Int, private v
                 else LegalDocumentScreen(selected) { document = null }
             }
         }
-        labels.forEachIndexed { index, label ->
+        labels.filterIndexed { index, _ -> AboutDocument.entries[index] != AboutDocument.PRIVACY_POLICY }
+            .forEachIndexed { index, label ->
             compose.onNodeWithText(label).performScrollTo().performClick()
             compose.waitUntil(15_000) {
                 compose.onAllNodesWithText("Редакция от 28 октября 2026 года").fetchSemanticsNodes().isNotEmpty()

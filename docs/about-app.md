@@ -12,16 +12,22 @@ The logo renders `R.mipmap.ic_launcher`, including its adaptive layers and mask,
 instead of the handoff logo or the currently active seasonal launcher alias.
 The displayed version comes from `BuildConfig.VERSION_NAME`.
 
-Navigation is Main → About → Licences / Privacy policy / Terms. Navigation visits
-and document button clicks use the existing consent-gated analytics. System Back
+Navigation is Main → About → Licences / Terms. Privacy policy opens
+`https://missclick3.github.io/wolfwisdom-privacy-policy/` in the external browser,
+without adding an in-app document screen to the back stack. Missing browser
+handlers show a localized message. The URL still requires GitHub Pages publication;
+the repository was empty when this behavior was implemented.
+Navigation visits and document button clicks use the existing consent-gated analytics. System Back
 is handled by Navigation and does not emit an explicit Back-button event.
 
 ## Documents
 
-`app/src/main/assets/legal/` contains Russian documents available offline, with
+`app/src/main/assets/legal/` contains Russian documents, with
 the developer identity and contact supplied by the owner. English UI shows an
 explicit note that legal texts are Russian. Long documents use a lazy list,
 selectable text, active web/email links, a contact action and loading/retry states.
+Licences and Terms remain available offline. The bundled privacy text is retained
+as the source for the public policy; the Privacy policy button opens the website.
 Full font license texts are loaded from the existing `assets/font_licenses/`.
 
 Privacy text reflects release-only opt-in AppMetrica, SDK queue/revocation
@@ -46,6 +52,15 @@ https://raw.githubusercontent.com/appmetrica/appmetrica-sdk-android/master/LICEN
 After updating dependencies, check the packaged notices against the new resolved
 release dependencies. The one-time export scripts and temporary inventory were
 removed after implementation. The packaged notice has no cache paths.
+
+## Privacy link verification (29 October 2026)
+
+- `:app:compileDebugKotlin` and `:app:compileDebugAndroidTestKotlin` passed offline.
+- Updated the existing About test to verify browser dispatch for Privacy policy
+  and in-app dispatch for Licences and Terms. Offline document checks cover only
+  the two local documents.
+- Resource XML parsing and `git diff --check` passed. No emulator or device test
+  was run, and the public page could not be verified as live.
 
 ## Verification (28 October 2026)
 
