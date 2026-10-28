@@ -3,5 +3,5 @@ package ru.missclick.wolfwisdom.analytics
 import org.koin.dsl.module
 
 val analyticsModule = module {
-    single<AnalyticsTracker> { AnalyticsRuntime.createTracker() }
+    single<AnalyticsTracker> { AnalyticsConsent.controller }
 }

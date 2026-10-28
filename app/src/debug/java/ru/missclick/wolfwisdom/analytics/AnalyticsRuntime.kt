@@ -5,7 +5,8 @@ import ru.missclick.wolfwisdom.logging.AppLog
 
 /** The debug APK has no AppMetrica dependency, services or startup code. */
 object AnalyticsRuntime {
-    fun initialize(@Suppress("UNUSED_PARAMETER") application: Application) = Unit
+    fun setEnabled(@Suppress("UNUSED_PARAMETER") application: Application,
+                   @Suppress("UNUSED_PARAMETER") enabled: Boolean) = Unit
 
     fun createTracker(): AnalyticsTracker = LoggingAnalyticsTracker()
 }

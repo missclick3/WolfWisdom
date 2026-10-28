@@ -1,6 +1,9 @@
 package ru.missclick.wolfwisdom.presentation.settings
 
 import ru.missclick.wolfwisdom.analytics.rememberScreenAnalytics
+import ru.missclick.wolfwisdom.analytics.AnalyticsConsent
+import ru.missclick.wolfwisdom.analytics.AnalyticsConsentChoice
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatDelegate
@@ -43,10 +46,12 @@ fun SettingsRoot(onBackClick: () -> Unit = {}) {
     val analytics = rememberScreenAnalytics(::SettingsAnalytics)
     val preferences = rememberFeedbackPreferences()
     val settings by rememberFeedbackSettings(preferences)
+    val consent by AnalyticsConsent.controller.choice.collectAsStateWithLifecycle()
     val previousLanguage = AppLanguage.fromTag(LocalConfiguration.current.locales[0].language).tag
     SettingsScreen(
         soundEffectsEnabled = settings.soundEffectsEnabled,
         vibrationEnabled = settings.vibrationEnabled,
+        analyticsEnabled = consent == AnalyticsConsentChoice.GRANTED,
         onBackButtonClick = { analytics.backClicked(); onBackClick() },
         onAction = { action ->
             analytics.onAction(action, previousLanguage)
@@ -57,6 +62,7 @@ fun SettingsRoot(onBackClick: () -> Unit = {}) {
                 }
                 is SettingsAction.SoundEffectsChanged -> preferences.setSoundEffectsEnabled(action.enabled)
                 is SettingsAction.VibrationChanged -> preferences.setVibrationEnabled(action.enabled)
+                is SettingsAction.AnalyticsChanged -> AnalyticsConsent.controller.choose(action.enabled)
             }
         }
     )
@@ -66,6 +72,7 @@ fun SettingsRoot(onBackClick: () -> Unit = {}) {
 fun SettingsScreen(
     soundEffectsEnabled: Boolean = true,
     vibrationEnabled: Boolean = true,
+    analyticsEnabled: Boolean = false,
     onAction: (SettingsAction) -> Unit,
     onBackButtonClick: () -> Unit = { onAction(SettingsAction.BackPressed) }
 ) {
@@ -114,6 +121,16 @@ fun SettingsScreen(
                 icon = R.drawable.ic_settings_vibration,
                 checked = vibrationEnabled,
                 onCheckedChange = { onAction(SettingsAction.VibrationChanged(it)) },
+                modifier = Modifier.widthIn(max = columnWidth).fillMaxWidth(),
+                minHeight = if (tablet) 116.dp else 100.dp,
+                backdrop = backdrop
+            )
+            SettingsCard(
+                title = stringResource(R.string.settings_analytics),
+                description = stringResource(R.string.settings_analytics_description),
+                icon = R.drawable.ic_settings_analytics,
+                checked = analyticsEnabled,
+                onCheckedChange = { onAction(SettingsAction.AnalyticsChanged(it)) },
                 modifier = Modifier.widthIn(max = columnWidth).fillMaxWidth(),
                 minHeight = if (tablet) 116.dp else 100.dp,
                 backdrop = backdrop

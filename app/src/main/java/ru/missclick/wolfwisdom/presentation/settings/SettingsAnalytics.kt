@@ -6,6 +6,7 @@ import ru.missclick.wolfwisdom.analytics.BaseScreenAnalytics
 class SettingsAnalytics(tracker: AnalyticsTracker) : BaseScreenAnalytics(tracker, "settings") {
     fun onAction(action: SettingsAction, previousLanguage: String) {
         when (action) {
+            is SettingsAction.AnalyticsChanged -> Unit // Never track a privacy choice.
             is SettingsAction.SoundEffectsChanged -> event("sound_toggle_clicked", "enabled" to action.enabled)
             is SettingsAction.VibrationChanged -> event("vibration_toggle_clicked", "enabled" to action.enabled)
             is SettingsAction.LanguageSelected -> event("language_option_clicked",

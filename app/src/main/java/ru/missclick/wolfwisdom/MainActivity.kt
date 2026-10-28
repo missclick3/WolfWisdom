@@ -1,6 +1,7 @@
 package ru.missclick.wolfwisdom
 
 import ru.missclick.wolfwisdom.analytics.ProvideAnalytics
+import ru.missclick.wolfwisdom.presentation.consent.AnalyticsConsentHost
 
 import android.media.AudioManager
 import android.os.Bundle
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity() {
             WolfWisdomTheme {
                 WolfWisdomScreen {
                     ProvideAnalytics { WolfNavHost() }
+                    AnalyticsConsentHost()
                 }
             }
         }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_analytics">Analytics and diagnostics</string>
+    <string name="settings_analytics_description">Send usage and crash information to AppMetrica. Optional; you can turn it off at any time.</string>
+    <string name="analytics_consent_title">Help improve the app?</string>
+    <string name="analytics_consent_description">With your consent, we will send feature usage, technical information about your device and app, their identifiers, and crash reports to AppMetrica. This helps us find errors and understand which features are useful.</string>
+    <string name="analytics_consent_private">Search queries and the contents of saved quotes are not included in analytics events.</string>
+    <string name="analytics_consent_optional">All features work without analytics. You can change your choice in Settings.</string>
+    <string name="analytics_consent_allow">Allow</string>
+    <string name="analytics_consent_decline">Don’t allow</string>
+    <string name="analytics_details_show">More about the data</string>
+    <string name="analytics_details_hide">Hide details</string>
+    <string name="analytics_consent_details">AppMetrica is an analytics service provided by Yandex. It receives information about sessions, screen visits, button taps, swipes, language settings and widget interactions, as well as technical information about the device, app version and crashes.\n\nAdvertising identifier collection and location tracking are disabled in the SDK configuration. Quote identifiers and search queries are not included in custom events.\n\nThe SDK does not start before consent. Turning analytics off stops further analytics transmission and the collection of interface events and crash reports by the app. It does not delete previously transmitted data. For questions about data processing, contact the developer through Contacts.</string>
+</resources>

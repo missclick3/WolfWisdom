@@ -22,10 +22,14 @@ class AppMetricaAnalyticsTracker : AnalyticsTracker {
                 .withLocationTracking(false)
                 .withAdvIdentifiersTracking(false)
                 .withRevenueAutoTrackingEnabled(false)
-                .withCrashReporting(true)
+                .withDataSendingEnabled(true)
+                .withSessionsAutoTrackingEnabled(false)
+                .withAppOpenTrackingEnabled(false)
+                .withCrashReporting(false)
+                .withNativeCrashReporting(false)
+                .withAnrMonitoring(false)
                 .build()
             AppMetrica.activate(application, config)
-            AppMetrica.enableActivityAutoTracking(application)
         }
     }
 }

@@ -1,6 +1,6 @@
 package ru.missclick.wolfwisdom
 
-import ru.missclick.wolfwisdom.analytics.AnalyticsRuntime
+import ru.missclick.wolfwisdom.analytics.AnalyticsConsent
 import ru.missclick.wolfwisdom.analytics.analyticsModule
 
 import android.app.Application
@@ -14,7 +14,7 @@ import ru.missclick.wolfwisdom.widget.WidgetUpdates
 class WolfWisdomApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        AnalyticsRuntime.initialize(this)
+        AnalyticsConsent.initialize(this)
         SeasonalIconManager.initialize(this)
         startKoin {
             androidContext(this@WolfWisdomApplication)

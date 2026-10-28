@@ -2,9 +2,9 @@
 
 | Setting | Debug | Release |
 | --- | --- | --- |
-| AppMetrica SDK | Not packaged | Packaged and initialized |
-| Custom events | Logcat, tag `AppAnalytics` | Sent to AppMetrica |
-| Automatic sessions/crash reports | No SDK, no transmission | Enabled |
+| AppMetrica SDK | Not packaged | Packaged; initialized only after consent |
+| Custom events | Logcat after consent, tag `AppAnalytics` | Sent only while consent is active |
+| Sessions/crash reports | No SDK, no transmission | Forwarded only while consent is active |
 | App logs | `AppLog`, enabled | Disabled; Logcat calls removed by R8 |
 | Optimization / obfuscation | Disabled | Enabled for the whole app |
 | Code / resource shrinking | Disabled | Enabled by AGP 9.4 `optimization` DSL |
@@ -42,6 +42,7 @@ seasonal launcher alias resolution and the instrumented package assertion.
 
 ```powershell
 $env:ANDROID_USER_HOME = Join-Path $PWD '.gradle-user-home/android'
+$env:JAVA_TOOL_OPTIONS = '-Duser.home=' + (Join-Path $PWD '.gradle-user-home')
 .\gradlew.bat --gradle-user-home .gradle-user-home '-Pkotlin.compiler.execution.strategy=in-process' :app:assembleDebug :app:testDebugUnitTest :app:compileDebugAndroidTestKotlin :app:assembleRelease --console=plain
 python scripts/verify_build_variants.py
 ```
