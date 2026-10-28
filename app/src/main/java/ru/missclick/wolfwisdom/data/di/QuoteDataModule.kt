@@ -15,7 +15,7 @@ val quoteDataModule = module {
             WolfWisdomDatabase::class.java,
             "wolf_wisdom.db"
         ).addMigrations(WolfWisdomDatabase.MIGRATION_1_2, WolfWisdomDatabase.MIGRATION_2_3,
-            WolfWisdomDatabase.MIGRATION_3_4).build()
+            WolfWisdomDatabase.MIGRATION_3_4, WolfWisdomDatabase.MIGRATION_4_5).build()
     }
     single { get<WolfWisdomDatabase>().quoteDao() }
     single { get<WolfWisdomDatabase>().quoteNavigationDao() }

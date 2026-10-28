@@ -48,6 +48,23 @@ class SavedQuotesDatabaseTest {
     fun migration3_preservesOtherSavedQuotesAndReadingHistory() = runBlocking { verifyMigration(3) }
 
     @Test
+    fun migration4_preservesOtherSavedQuotesAndReadingHistory() = runBlocking { verifyMigration(4) }
+
+    @Test
+    fun newQuoteMigrationDoesNotDuplicateOrPreventFullSeeding() = runBlocking {
+        val db = inMemoryDatabase()
+        val sql = db.openHelper.writableDatabase
+        db.runInTransaction { WolfWisdomDatabase.MIGRATION_4_5.migrate(sql) }
+        assertEquals(0, db.quoteDao().count())
+        db.quoteDao().insertAll(listOf(QuoteDto(100, "Keep saved", true, 123)))
+        repeat(2) { db.runInTransaction { WolfWisdomDatabase.MIGRATION_4_5.migrate(sql) } }
+        assertEquals(2, db.quoteDao().count())
+        assertEquals(listOf(QuoteDto(100, "Keep saved", true, 123)), db.quoteDao().observeSaved().first())
+        assertEquals("Царь не тот, кто сидит на троне, а тот, кто сидит, пока другие стоят.",
+            db.quoteDao().getById(101)?.quote)
+    }
+
+    @Test
     fun withdrawnQuotesAreRemovedWithoutBreakingForeignKeysOrOtherSaves() = runBlocking {
         val db = inMemoryDatabase()
         val sql = db.openHelper.writableDatabase
@@ -106,7 +123,8 @@ class SavedQuotesDatabaseTest {
         }
 
         val migrated = Room.databaseBuilder(context, WolfWisdomDatabase::class.java, migrationDatabaseName)
-            .addMigrations(WolfWisdomDatabase.MIGRATION_1_2, WolfWisdomDatabase.MIGRATION_2_3, WolfWisdomDatabase.MIGRATION_3_4)
+            .addMigrations(WolfWisdomDatabase.MIGRATION_1_2, WolfWisdomDatabase.MIGRATION_2_3,
+                WolfWisdomDatabase.MIGRATION_3_4, WolfWisdomDatabase.MIGRATION_4_5)
             .build().also { database = it }
 
         val saved = migrated.quoteDao().observeSaved().first()
@@ -118,7 +136,7 @@ class SavedQuotesDatabaseTest {
             assertTrue(it.moveToFirst())
             assertEquals(1, it.getInt(0))
         }
-        assertEquals(4, migrated.openHelper.readableDatabase.version)
+        assertEquals(5, migrated.openHelper.readableDatabase.version)
         assertFalse(requireNotNull(migrated.quoteDao().getById(1)).isOnWidget)
     }
 

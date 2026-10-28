@@ -18,7 +18,7 @@ import ru.missclick.wolfwisdom.data.local.dto.QuoteReadingStateDto
         QuoteReadingStateDto::class,
         QuoteCycleEntryDto::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class WolfWisdomDatabase : RoomDatabase() {
@@ -26,6 +26,20 @@ abstract class WolfWisdomDatabase : RoomDatabase() {
     abstract fun quoteNavigationDao(): QuoteNavigationDao
 
     companion object {
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val quote = "Царь не тот, кто сидит на троне, а тот, кто сидит, пока другие стоят."
+                // An empty database must remain empty so normal initialization
+                // loads the full seed, rather than just this one new quote.
+                db.execSQL("""
+                    INSERT INTO quotes (quote, isSaved, savedAt, isOnWidget)
+                    SELECT ?, 0, NULL, 0
+                    WHERE EXISTS (SELECT 1 FROM quotes)
+                    AND NOT EXISTS (SELECT 1 FROM quotes WHERE quote = ?)
+                """.trimIndent(), arrayOf(quote, quote))
+            }
+        }
+
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Match text, not seed row numbers: existing IDs must remain stable for
