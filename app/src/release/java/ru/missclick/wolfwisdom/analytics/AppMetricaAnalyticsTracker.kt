@@ -1,19 +1,13 @@
 package ru.missclick.wolfwisdom.analytics
 
 import android.app.Application
-import ru.missclick.wolfwisdom.logging.AppLog
 import io.appmetrica.analytics.AppMetrica
 import io.appmetrica.analytics.AppMetricaConfig
 import ru.missclick.wolfwisdom.BuildConfig
 
 class AppMetricaAnalyticsTracker : AnalyticsTracker {
     override fun track(name: String, parameters: Map<String, Any>) {
-        // Analytics must never interrupt a user action.
-        try {
-            AppMetrica.reportEvent(name, parameters)
-        } catch (error: RuntimeException) {
-            AppLog.w("AppAnalytics", "Unable to queue event: $name", error)
-        }
+        AnalyticsRuntime.reportEvent(name, parameters)
     }
 
     companion object {
@@ -22,7 +16,7 @@ class AppMetricaAnalyticsTracker : AnalyticsTracker {
                 .withLocationTracking(false)
                 .withAdvIdentifiersTracking(false)
                 .withRevenueAutoTrackingEnabled(false)
-                .withDataSendingEnabled(true)
+                .withDataSendingEnabled(false)
                 .withSessionsAutoTrackingEnabled(false)
                 .withAppOpenTrackingEnabled(false)
                 .withCrashReporting(false)

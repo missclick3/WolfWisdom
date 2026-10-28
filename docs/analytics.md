@@ -30,6 +30,18 @@ disclosures before distribution. See [release configuration](release.md).
   pauses the session. No subsequent app UI events or JVM crashes are forwarded.
   The SDK remains initialized until process exit; already queued SDK data is not
   deleted by this switch, and withdrawal does not delete server-side data.
+- SDK activation starts with data sending disabled; it is enabled only after
+  activation completes under an existing grant. `AnalyticsCollectionController`
+  contains ordinary failures during activation, session changes, event/crash
+  forwarding and withdrawal. A failure closes the local reporting gate and
+  independently attempts to disable SDK transmission and pause the session.
+  Cleanup failures are contained too. There are no repeated activation attempts
+  in that process; a new process can try again if consent is still granted.
+  The saved choice represents the user's consent, not SDK availability, and is
+  not changed by an SDK failure. Cancellation and fatal errors propagate.
+  SDK failure containment cannot guarantee shutdown of a malfunctioning SDK;
+  already queued/server-side data is not deleted. The original uncaught-exception
+  handler still runs even when forwarding a crash fails.
 - The dialog includes expandable data details. It does not link to a placeholder
   privacy-policy URL; the full published policy still belongs in About/store metadata.
 
