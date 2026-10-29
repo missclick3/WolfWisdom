@@ -40,6 +40,11 @@ seasonal launcher alias resolution and the instrumented package assertion.
 
 ## Build and checks
 
+`base.archivesName` in `app/build.gradle.kts` sets the APK/AAB filename prefix to
+`wolf-wisdom`. For example, debug builds produce `wolf-wisdom-debug.apk` and
+`wolf-wisdom-debug.aab`; release bundles use `wolf-wisdom-release.aab`.
+An unsigned release APK retains the `-unsigned` suffix.
+
 ```powershell
 $env:ANDROID_USER_HOME = Join-Path $PWD '.gradle-user-home/android'
 $env:JAVA_TOOL_OPTIONS = '-Duser.home=' + (Join-Path $PWD '.gradle-user-home')

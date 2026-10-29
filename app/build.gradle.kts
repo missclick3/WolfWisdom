@@ -8,6 +8,10 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+base {
+    archivesName.set("wolf-wisdom")
+}
+
 val localProperties = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }

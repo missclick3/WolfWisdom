@@ -76,8 +76,8 @@ Build commands (PowerShell needs quotes around dotted -P options):
 
 ```powershell
 .\gradlew.bat --offline --gradle-user-home .gradle-user-home '-Pkotlin.compiler.execution.strategy=in-process' :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:lintDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb install -r app/build/outputs/apk/debug/wolf-wisdom-debug.apk
+adb install -r app/build/outputs/apk/androidTest/debug/wolf-wisdom-debug-androidTest.apk
 adb shell am instrument -w -e package ru.missclick.wolfwisdom.widget ru.missclick.wolfwisdom.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
