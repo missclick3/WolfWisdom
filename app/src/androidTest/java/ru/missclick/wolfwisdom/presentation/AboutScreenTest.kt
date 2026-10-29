@@ -33,7 +33,7 @@ import ru.missclick.wolfwisdom.ui.theme.WolfWisdomTheme
 class AboutScreenTest(private val width: Int, private val height: Int, private val fontScale: Float) {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val labels = listOf("Лицензии", "Политика конфиденциальности", "Условия использования")
+    private val labels = listOf("Политика конфиденциальности", "Условия использования")
 
     @Test
     fun documentButtonsOpenPrivacyInBrowserAndOtherDocumentsInApp() {
@@ -51,11 +51,12 @@ class AboutScreenTest(private val width: Int, private val height: Int, private v
             }
         }
         screenshot("about")
+        compose.onNodeWithText("Лицензии").assertDoesNotExist()
         labels.forEach { label ->
             compose.onNodeWithText(label).performScrollTo().assertIsDisplayed().performClick()
         }
         compose.runOnIdle {
-            assertEquals(listOf(AboutDocument.LICENSES, AboutDocument.TERMS), opened)
+            assertEquals(listOf(AboutDocument.TERMS), opened)
             assertEquals(listOf(PRIVACY_POLICY_URL), openedUrls)
         }
         compose.onNodeWithText("О приложении").assertIsDisplayed()
@@ -73,7 +74,7 @@ class AboutScreenTest(private val width: Int, private val height: Int, private v
                 else LegalDocumentScreen(selected) { document = null }
             }
         }
-        labels.filterIndexed { index, _ -> AboutDocument.entries[index] != AboutDocument.PRIVACY_POLICY }
+        labels.filter { it == "Условия использования" }
             .forEachIndexed { index, label ->
             compose.onNodeWithText(label).performScrollTo().performClick()
             compose.waitUntil(15_000) {

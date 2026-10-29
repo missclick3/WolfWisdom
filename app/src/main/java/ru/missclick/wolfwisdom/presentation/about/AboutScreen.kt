@@ -153,7 +153,7 @@ private fun AboutDescription(tablet: Boolean, landscape: Boolean, modifier: Modi
 private fun AboutLinks(backdrop: WolfGlassBackdrop, tablet: Boolean, landscape: Boolean,
     onClick: (AboutDocument) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        AboutDocument.entries.forEach { document ->
+        listOf(AboutDocument.PRIVACY_POLICY, AboutDocument.TERMS).forEach { document ->
             val icon = when (document) {
                 AboutDocument.LICENSES -> R.drawable.about_licenses
                 AboutDocument.PRIVACY_POLICY -> R.drawable.about_privacy
