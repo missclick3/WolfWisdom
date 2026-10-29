@@ -1,11 +1,13 @@
 package ru.missclick.wolfwisdom.widget
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Parcel
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
@@ -23,6 +25,32 @@ class WidgetRenderingTest {
     @After fun clean() {
         context.getSharedPreferences("widget_debug", 0).edit().clear().commit()
         WidgetRenderer.clearCache()
+    }
+
+    @Test fun preview_inAppCompatActivity_usesFrameworkViewsForImagesAndFallback() {
+        val intent = Intent(context, WidgetConfigurationActivity::class.java)
+            .putExtra("request_pin", true)
+        ActivityScenario.launch<WidgetConfigurationActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                for (theme in WidgetTheme.entries) {
+                    val state = WidgetState(42, theme)
+                    val views = WidgetRenderer.render(activity, -1, state, quote,
+                        WidgetDimensions(240f, 240f), WidgetRenderer.budget(activity))
+                    val root = views.apply(activity, FrameLayout(activity))
+                    val image = root.findViewById<ImageView>(R.id.widget_text_image)
+                    assertEquals(ImageView::class.java, image.javaClass)
+                    assertEquals(View.VISIBLE, image.visibility)
+                    assertNotNull(image.drawable)
+
+                    val fallback = WidgetRenderer.fallback(activity, -1, state, quote, "preview-test")
+                        .apply(activity, FrameLayout(activity))
+                    val text = fallback.findViewById<TextView>(R.id.widget_quote)
+                    assertEquals(TextView::class.java, text.javaClass)
+                    assertEquals(quote.text, text.text.toString())
+                    assertEquals(View.VISIBLE, fallback.findViewById<View>(R.id.widget_native).visibility)
+                }
+            }
+        }
     }
 
     @Test fun textFitting_selectsLargestCompleteOptionAndPreservesAuthor() {

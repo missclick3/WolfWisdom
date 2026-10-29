@@ -2,16 +2,17 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
     android:background="@drawable/widget_dark" android:clipToOutline="true" android:contentDescription="@string/widget_description">
-    <ImageView android:id="@+id/widget_background" android:layout_width="match_parent" android:layout_height="match_parent"
+    <!-- Explicit framework classes prevent AppCompat substitution in the in-app RemoteViews preview. -->
+    <android.widget.ImageView android:id="@+id/widget_background" android:layout_width="match_parent" android:layout_height="match_parent"
         android:scaleType="fitXY" android:visibility="gone" android:importantForAccessibility="no" />
-    <ImageView android:id="@+id/widget_text_image" android:layout_width="match_parent" android:layout_height="match_parent"
+    <android.widget.ImageView android:id="@+id/widget_text_image" android:layout_width="match_parent" android:layout_height="match_parent"
         android:padding="16dp" android:scaleType="centerInside" android:visibility="gone" android:importantForAccessibility="no" />
     <LinearLayout android:id="@+id/widget_native" android:layout_width="match_parent" android:layout_height="match_parent"
         android:orientation="vertical" android:padding="16dp" android:gravity="center_vertical" android:importantForAccessibility="noHideDescendants">
-        <TextView android:id="@+id/widget_quote" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        <android.widget.TextView android:id="@+id/widget_quote" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
             android:gravity="center_vertical" android:text="@string/widget_empty" android:textColor="#F0F5FF" android:fontFamily="serif"
             android:textSize="16sp" android:maxLines="4" android:ellipsize="end" android:includeFontPadding="false" />
-        <TextView android:id="@+id/widget_author" android:layout_width="match_parent" android:layout_height="wrap_content"
+        <android.widget.TextView android:id="@+id/widget_author" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="8dp" android:textColor="#A7BDD3" android:textSize="12sp" android:maxLines="1"
             android:ellipsize="end" android:includeFontPadding="false" />
     </LinearLayout>
